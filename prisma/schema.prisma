@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String  @map("user_id")
+  type               String
+  provider           String
+  providerAccountId  String  @map("provider_account_id")
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts            Account[]
+  sessions            Session[]
+  apartmentMembers    ApartmentMember[]
+  expensesCreated     Expense[]             @relation("ExpenseCreator")
+  expenseParticipants ExpenseParticipant[]
+  settlementsPaid     Settlement[]          @relation("SettlementPayer")
+  settlementsReceived Settlement[]          @relation("SettlementPayee")
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Apartment {
+  id              String   @id @default(cuid())
+  name            String
+  inviteLinkToken String   @unique @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  members     ApartmentMember[]
+  expenses    Expense[]
+  settlements Settlement[]
+
+  @@map("apartments")
+}
+
+model ApartmentMember {
+  apartmentId String
+  userId      String
+  joinedAt    DateTime @default(now())
+
+  apartment Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([apartmentId, userId])
+  @@map("apartment_members")
+}
+
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  apartmentId String
+  creatorId   String
+  description String
+  totalAmount Int       // Stored in cents
+  splitType   SplitType
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  apartment    Apartment            @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  creator      User                 @relation("ExpenseCreator", fields: [creatorId], references: [id])
+  participants ExpenseParticipant[]
+
+  @@map("expenses")
+}
+
+model ExpenseParticipant {
+  id         String @id @default(cuid())
+  expenseId  String
+  userId     String
+  amountPaid Int    @default(0) // Stored in cents
+  amountOwed Int    @default(0) // Stored in cents
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expense_participants")
+}
+
+model Settlement {
+  id          String   @id @default(cuid())
+  apartmentId String
+  payerId     String
+  payeeId     String
+  amount      Int      // Stored in cents
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  apartment Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  payer     User      @relation("SettlementPayer", fields: [payerId], references: [id])
+  payee     User      @relation("SettlementPayee", fields: [payeeId], references: [id])
+
+  @@map("settlements")
+}
