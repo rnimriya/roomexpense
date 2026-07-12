@@ -355,8 +355,14 @@ export async function addRoommateAction(data: { name: string; email: string }) {
 
   if (!apartment) throw new Error("Apartment not found");
 
-  if (apartment.plan === "FREE" && apartment.members.length >= 2) {
-    throw new Error("PAYWALL_TRIGGERED: Adding a 3rd roommate requires a Pro subscription ($4/roommate/month).");
+  // 1. If plan is FREE and trying to add a 2nd user, trigger BASIC upgrade ($2.50 each)
+  if (apartment.plan === "FREE" && apartment.members.length >= 1) {
+    throw new Error("PAYWALL_BASIC_TRIGGERED: Adding a 2nd roommate requires a Basic subscription ($2.50 each per month).");
+  }
+
+  // 2. If plan is BASIC and trying to add a 3rd user, trigger PRO upgrade ($4.00 each)
+  if (apartment.plan === "BASIC" && apartment.members.length >= 2) {
+    throw new Error("PAYWALL_PRO_TRIGGERED: Adding a 3rd roommate requires a Pro subscription ($4/roommate/month).");
   }
 
   // 1. Check if user already exists
@@ -408,8 +414,13 @@ export async function joinApartmentWithTokenAction(token: string, userId: string
   if (!apartment) throw new Error("Invalid invite link token");
 
   const isMember = apartment.members.some(m => m.userId === userId);
-  if (!isMember && apartment.plan === "FREE" && apartment.members.length >= 2) {
-    throw new Error("PAYWALL_TRIGGERED: Joining requires upgrading this apartment to Pro.");
+  if (!isMember) {
+    if (apartment.plan === "FREE" && apartment.members.length >= 1) {
+      throw new Error("PAYWALL_BASIC_TRIGGERED");
+    }
+    if (apartment.plan === "BASIC" && apartment.members.length >= 2) {
+      throw new Error("PAYWALL_PRO_TRIGGERED");
+    }
   }
 
   // Check membership
@@ -471,10 +482,10 @@ export async function sendNudgeAction(senderId: string, recipientId: string, amo
   revalidatePath("/dashboard");
 }
 
-export async function upgradeApartmentAction(apartmentId: string) {
+export async function upgradeApartmentAction(apartmentId: string, plan: string) {
   await prisma.apartment.update({
     where: { id: apartmentId },
-    data: { plan: "PRO" },
+    data: { plan },
   });
   revalidatePath("/roommates");
   revalidatePath("/dashboard");

@@ -59,15 +59,22 @@ export default async function RoommatesPage() {
               Group: <span className="text-zinc-100">{apartment.name}</span>
             </p>
             <p className="text-[10px] text-zinc-500 mt-0.5">
-              {apartment.plan === "PRO" ? "Pro Plan Active (Unlimited roommates)" : `Free Plan (${apartment.members.length}/2 Roommates limit)`}
+              {apartment.plan === "PRO" 
+                ? "Pro Plan Active (Unlimited roommates)" 
+                : apartment.plan === "BASIC"
+                ? `Basic Plan Active (${apartment.members.length}/2 Roommates limit)`
+                : `Free Plan (${apartment.members.length}/1 Roommate limit)`
+              }
             </p>
           </div>
           <span className={`text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider ${
             apartment.plan === "PRO" 
               ? "text-green-500 bg-green-500/10 border border-green-500/20" 
+              : apartment.plan === "BASIC"
+              ? "text-[#0584eb] bg-[#0584eb]/10 border border-[#0584eb]/20"
               : "text-zinc-400 bg-zinc-850 border border-zinc-800"
           }`}>
-            {apartment.plan === "PRO" ? "Pro" : "Free"}
+            {apartment.plan}
           </span>
         </div>
 

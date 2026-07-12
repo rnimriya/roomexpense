@@ -18,8 +18,11 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     await joinApartmentWithTokenAction(token, userId);
   } catch (err: any) {
     console.error("Failed to join apartment via invite link:", err);
-    if (err.message && err.message.includes("PAYWALL_TRIGGERED")) {
-      redirect("/dashboard?error=PAYWALL_TRIGGERED");
+    if (err.message && err.message.includes("PAYWALL_BASIC_TRIGGERED")) {
+      redirect("/dashboard?error=PAYWALL_BASIC_TRIGGERED");
+    }
+    if (err.message && err.message.includes("PAYWALL_PRO_TRIGGERED")) {
+      redirect("/dashboard?error=PAYWALL_PRO_TRIGGERED");
     }
   }
 

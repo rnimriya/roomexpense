@@ -15,6 +15,7 @@ export function RoommateForm() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallTier, setPaywallTier] = useState<"BASIC" | "PRO">("BASIC");
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -28,7 +29,11 @@ export function RoommateForm() {
       toast.success("Roommate added successfully!");
       router.refresh();
     } catch (err: any) {
-      if (err.message && err.message.includes("PAYWALL_TRIGGERED")) {
+      if (err.message && err.message.includes("PAYWALL_BASIC_TRIGGERED")) {
+        setPaywallTier("BASIC");
+        setPaywallOpen(true);
+      } else if (err.message && err.message.includes("PAYWALL_PRO_TRIGGERED")) {
+        setPaywallTier("PRO");
         setPaywallOpen(true);
       } else {
         toast.error(err.message || "Failed to add roommate");
@@ -82,6 +87,7 @@ export function RoommateForm() {
           open={paywallOpen}
           onOpenChange={setPaywallOpen}
           apartmentId="a1"
+          tier={paywallTier}
           onSuccess={handlePaywallSuccess}
         />
       )}

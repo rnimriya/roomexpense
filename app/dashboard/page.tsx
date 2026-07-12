@@ -26,7 +26,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
   if (!session || !session.user) redirect("/login");
 
   const searchParams = await props.searchParams;
-  const isPaywallError = searchParams?.error === "PAYWALL_TRIGGERED";
+  const isPaywallError = searchParams?.error && searchParams.error.includes("PAYWALL");
 
   // Run lazy-cron recurring expenses check
   try {
