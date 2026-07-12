@@ -7,7 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
-import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Plus } from "lucide-react";
+import { lazyTriggerRecurringExpenses } from "@/app/actions";
+import { NudgeButton } from "@/components/NudgeButton";
+import { NotificationsBell } from "@/components/NotificationsBell";
+import { MonthlySummaryCard } from "@/components/MonthlySummaryCard";
 
 // Format cents to dollars
 const formatCurrency = (cents: number) => {
@@ -17,111 +21,211 @@ const formatCurrency = (cents: number) => {
   }).format(Math.abs(cents) / 100);
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: { searchParams: Promise<{ error?: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) redirect("/login");
 
-  const currentUserId = (session.user as any).id || "u1"; // Fallback to Alice if id is missing
+  const searchParams = await props.searchParams;
+  const isPaywallError = searchParams?.error === "PAYWALL_TRIGGERED";
+
+  // Run lazy-cron recurring expenses check
+  try {
+    await lazyTriggerRecurringExpenses();
+  } catch (err) {
+    console.error("Failed to run recurring expenses cron", err);
+  }
+
+  const currentUserId = (session.user as any).id || "u1";
 
   const { netBalance, peerBalances, recentActivity, users } = await getDashboardData(currentUserId);
 
+  // Serialize recent activity and users to avoid client-side date transfer errors
+  const serializedRecentActivity = recentActivity.map(act => ({
+    ...act,
+    date: act.date.toISOString(),
+    data: {
+      ...act.data,
+      createdAt: act.data.createdAt.toISOString(),
+      updatedAt: act.data.updatedAt.toISOString(),
+    }
+  }));
+
+  const serializedUsers = users.map(u => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+  }));
+
   return (
     <div className="flex flex-col h-full bg-zinc-950 text-zinc-50">
-      {/* Header section with massive typography */}
-      <div className="pt-16 pb-8 px-6 text-center">
-        <p className="text-sm font-medium text-zinc-400 mb-2 tracking-wide uppercase">
-          {session.user.name || "Your"}'s Balance
-        </p>
-        <h1 className={`text-6xl font-black tracking-tighter ${netBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-          {netBalance < 0 ? '-' : ''}{formatCurrency(netBalance)}
+      {/* Brand Navigation Bar - Structured Top Header */}
+      <div className="pt-8 pb-4 px-6 flex justify-between items-center border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md z-40 shrink-0">
+        <h1 className="text-lg font-black tracking-widest text-zinc-100 uppercase">
+          FairShare
         </h1>
-        <p className="text-sm text-zinc-500 mt-3 font-medium">
-          {netBalance > 0 ? "You are owed" : netBalance < 0 ? "You owe" : "You're all settled up"}
-        </p>
+        <NotificationsBell 
+          activities={serializedRecentActivity} 
+          currentUserId={currentUserId}
+          users={serializedUsers}
+        />
       </div>
 
-      <Separator className="bg-zinc-900" />
-
       <ScrollArea className="flex-1">
-        {/* Who Owes Who Section */}
-        <div className="px-6 py-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-zinc-100">Roommate Balances</h2>
-            <Link href="/settle" className="text-xs font-semibold text-green-500 hover:text-green-400 transition-colors uppercase tracking-wider bg-green-500/10 px-3 py-1.5 rounded-full">
-              Settle Up
+        {/* Marketing SaaS paywall block alert */}
+        {isPaywallError && (
+          <div className="mx-6 mt-4 p-4.5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold text-red-500 uppercase tracking-widest">Upgrade Required</p>
+              <p className="text-[10px] text-zinc-450 leading-relaxed mt-1">
+                A roommate tried to join your group via invite link but was blocked. Free apartments are limited to 2 roommates.
+              </p>
+            </div>
+            <Link 
+              href="/roommates" 
+              className="text-[10px] font-bold text-white bg-[#0584eb] hover:bg-[#2094f0] px-4 py-2 rounded-full uppercase tracking-wider shrink-0 transition-colors shadow-[0_0_15px_-3px_rgba(5,132,235,0.4)]"
+            >
+              Upgrade Now
             </Link>
           </div>
+        )}
+
+        {/* Balance Section with subtle radial background styling */}
+        <div className="py-10 px-6 text-center bg-zinc-900/10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-900/30 via-transparent to-transparent pointer-events-none" />
+          <p className="text-[10px] font-bold text-zinc-500 mb-2 tracking-widest uppercase relative z-10">
+            {session.user.name || "Your"}'s Balance
+          </p>
+          <h1 className={`text-6xl font-black tracking-tighter relative z-10 ${netBalance >= 0 ? 'text-green-500 drop-shadow-[0_0_20px_rgba(34,197,94,0.15)]' : 'text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.15)]'}`}>
+            {netBalance < 0 ? '-' : ''}{formatCurrency(netBalance)}
+          </h1>
+          <p className="text-xs text-zinc-400 mt-3 font-semibold relative z-10">
+            {netBalance > 0 ? "You are owed overall" : netBalance < 0 ? "You owe overall" : "You're all settled up"}
+          </p>
+        </div>
+
+        <Separator className="bg-zinc-900" />
+
+        {/* Monthly Summary Banner */}
+        <div className="pt-6">
+          <MonthlySummaryCard 
+            activities={serializedRecentActivity} 
+            currentUserId={currentUserId} 
+            users={serializedUsers} 
+          />
+        </div>
+
+        {/* Who Owes Who Section */}
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-zinc-100 tracking-tight">Roommates</h2>
+            <div className="flex gap-2">
+              <Link href="/roommates" className="text-[10px] font-bold text-zinc-400 hover:text-zinc-200 transition-colors uppercase tracking-widest bg-zinc-900 border border-zinc-850 px-3 py-1.5 rounded-full active:scale-95 transition-transform">
+                Manage
+              </Link>
+              <Link href="/settle" className="text-[10px] font-bold text-green-500 hover:text-green-400 transition-colors uppercase tracking-widest bg-green-500/10 px-3 py-1.5 rounded-full active:scale-95 transition-transform">
+                Settle Up
+              </Link>
+            </div>
+          </div>
           
-          <div className="space-y-4">
-            {peerBalances.filter(pb => pb.amount !== 0).length === 0 ? (
-              <p className="text-sm text-zinc-500 text-center py-4">All settled up with everyone!</p>
-            ) : (
-              peerBalances.filter(pb => pb.amount !== 0).map(pb => {
-                const peerUser = users.find(u => u.id === pb.userId);
-                return (
-                  <Card key={pb.userId} className="bg-zinc-900/50 border-zinc-800">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-12 w-12 border border-zinc-800">
-                          <AvatarFallback className="bg-zinc-800 text-zinc-300 font-bold">
-                            {peerUser?.name?.charAt(0) || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-bold text-zinc-100">{peerUser?.name}</p>
-                          <p className="text-xs text-zinc-400 font-medium mt-0.5">
-                            {pb.amount > 0 ? "Owes you" : "You owe"}
-                          </p>
-                        </div>
+          <div className="space-y-3.5">
+            {peerBalances.filter(pb => pb.amount !== 0).map(pb => {
+              const peerUser = users.find(u => u.id === pb.userId);
+              return (
+                <Card key={pb.userId} className="bg-zinc-900/30 border-zinc-900 rounded-2xl overflow-hidden hover:bg-zinc-900/40 transition-colors duration-250">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3.5">
+                      <Avatar className="h-10 w-10 border border-zinc-800">
+                        <AvatarFallback className="bg-zinc-900 text-zinc-300 font-bold text-xs">
+                          {peerUser?.name?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-bold text-zinc-200 text-sm">{peerUser?.name}</p>
+                        <p className="text-[10px] text-zinc-550 font-medium mt-0.5">
+                          {pb.amount > 0 ? "Owes you" : "You owe"}
+                        </p>
                       </div>
-                      <div className={`text-lg font-bold ${pb.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      {pb.amount > 0 && (
+                        <NudgeButton 
+                          senderId={currentUserId}
+                          recipientId={pb.userId}
+                          amountCents={pb.amount}
+                        />
+                      )}
+                      <div className={`text-base font-black ${pb.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
                         {formatCurrency(pb.amount)}
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            {/* Dash placeholder to Add or Invite Roommates */}
+            <Card className="bg-zinc-950 border border-dashed border-zinc-850 rounded-2xl overflow-hidden hover:bg-zinc-900/20 transition-all duration-250 cursor-pointer active:scale-98">
+              <Link href="/roommates">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="h-10 w-10 rounded-full border border-dashed border-zinc-800 flex items-center justify-center text-zinc-400 text-lg">
+                      <Plus className="h-4 w-4 text-zinc-400" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-zinc-300 text-sm">Add or Invite Roommates</p>
+                      <p className="text-[10px] text-zinc-550 font-medium mt-0.5">
+                        Add profiles directly or share invite link
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Link>
+            </Card>
           </div>
         </div>
 
         {/* Recent Activity Section */}
-        <div className="px-6 pb-20">
-          <h2 className="text-lg font-bold text-zinc-100 mb-4">Recent Activity</h2>
-          <div className="space-y-4">
+        <div className="px-6 pb-24 pt-4">
+          <h2 className="text-base font-bold text-zinc-100 mb-4 tracking-tight">Recent Activity</h2>
+          <div className="space-y-3.5">
             {recentActivity.map((activity, idx) => {
               if (activity.type === 'expense') {
                 const expense = activity.data;
                 const creator = users.find(u => u.id === expense.creatorId);
                 return (
-                  <div key={idx} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+                  <Link key={idx} href={`/expense/${expense.id}`} className="flex items-center justify-between hover:bg-zinc-900/30 p-2 rounded-xl transition-colors">
+                    <div className="flex items-center gap-3.5">
+                      <div className="h-10 w-10 rounded-full bg-zinc-900 border border-zinc-850 flex items-center justify-center">
                         <ArrowDownLeft className="h-4 w-4 text-zinc-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-zinc-100 text-sm">{expense.description}</p>
-                        <p className="text-xs text-zinc-500">{creator?.name || "Someone"} paid {formatCurrency(expense.totalAmount)}</p>
+                        <p className="font-bold text-zinc-200 text-sm">{expense.description}</p>
+                        <p className="text-[10px] text-zinc-550 mt-0.5">Paid by {creator?.name || "Someone"}</p>
                       </div>
                     </div>
-                  </div>
+                    <div className="text-sm font-black text-zinc-200">
+                      {formatCurrency(expense.totalAmount)}
+                    </div>
+                  </Link>
                 );
               } else {
                 const settlement = activity.data;
                 const payer = users.find(u => u.id === settlement.payerId);
                 const payee = users.find(u => u.id === settlement.payeeId);
                 return (
-                  <div key={idx} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div key={idx} className="flex items-center justify-between p-2">
+                    <div className="flex items-center gap-3.5">
                       <div className="h-10 w-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
                         <ArrowUpRight className="h-4 w-4 text-green-500" />
                       </div>
                       <div>
-                        <p className="font-medium text-zinc-100 text-sm">Payment</p>
-                        <p className="text-xs text-zinc-500">{payer?.name || "Someone"} paid {payee?.name || "Someone"}</p>
+                        <p className="font-bold text-zinc-200 text-sm">Payment</p>
+                        <p className="text-[10px] text-zinc-550 mt-0.5">{payer?.name || "Someone"} paid {payee?.name || "Someone"}</p>
                       </div>
                     </div>
-                    <div className="text-sm font-semibold text-zinc-300">
+                    <div className="text-sm font-bold text-zinc-400">
                       {formatCurrency(settlement.amount)}
                     </div>
                   </div>

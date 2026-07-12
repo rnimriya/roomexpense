@@ -3,40 +3,79 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { SplitType } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 export async function createExpenseAction(data: {
   creatorId: string;
   description: string;
   totalAmount: number;
   splitType: "EQUAL" | "EXACT" | "PERCENTAGE";
+  receiptUrl?: string;
+  isRecurring?: boolean;
+  recurringInterval?: string;
+  customSplits?: { userId: string; percent?: number; amount?: number }[];
 }) {
+  await enforceRateLimit(15, 60000); // Max 15 expense creations per minute per IP
   const users = await prisma.user.findMany();
   const numParticipants = users.length;
   
   if (numParticipants === 0) throw new Error("No roommates in database to split with");
 
-  // Split calculations
-  const splitAmount = Math.floor(data.totalAmount / numParticipants);
-  const remainder = data.totalAmount % numParticipants;
+  // Determine splits
+  let participantsData: { userId: string; amountPaid: number; amountOwed: number }[] = [];
+
+  if (data.splitType === "PERCENTAGE" && data.customSplits) {
+    // Percentage Split
+    participantsData = users.map(u => {
+      const custom = data.customSplits?.find(cs => cs.userId === u.id);
+      const percent = custom?.percent || 0;
+      const amountOwed = Math.round((data.totalAmount * percent) / 100);
+      return {
+        userId: u.id,
+        amountPaid: u.id === data.creatorId ? data.totalAmount : 0,
+        amountOwed,
+      };
+    });
+  } else {
+    // Equal Split (Default fallback)
+    const splitAmount = Math.floor(data.totalAmount / numParticipants);
+    const remainder = data.totalAmount % numParticipants;
+    participantsData = users.map((u, i) => ({
+      userId: u.id,
+      amountPaid: u.id === data.creatorId ? data.totalAmount : 0,
+      amountOwed: splitAmount + (i === 0 ? remainder : 0),
+    }));
+  }
 
   await prisma.$transaction(async (tx) => {
+    // Setup next recurring date if marked recurring
+    let nextRecurringDate: Date | null = null;
+    if (data.isRecurring && data.recurringInterval === "MONTHLY") {
+      const now = new Date();
+      nextRecurringDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    }
+
     const expense = await tx.expense.create({
       data: {
-        apartmentId: "a1", // Seeded apartment ID
+        apartmentId: "a1",
         creatorId: data.creatorId,
         description: data.description,
         totalAmount: data.totalAmount,
         splitType: data.splitType as SplitType,
+        receiptUrl: data.receiptUrl,
+        isRecurring: data.isRecurring || false,
+        recurringInterval: data.recurringInterval,
+        nextRecurringDate,
       },
     });
 
-    // Create participant records
     await tx.expenseParticipant.createMany({
-      data: users.map((u, i) => ({
+      data: participantsData.map(p => ({
         expenseId: expense.id,
-        userId: u.id,
-        amountPaid: u.id === data.creatorId ? data.totalAmount : 0,
-        amountOwed: splitAmount + (i === 0 ? remainder : 0), // give remainder to the first user
+        userId: p.userId,
+        amountPaid: p.amountPaid,
+        amountOwed: p.amountOwed,
       })),
     });
   });
@@ -50,6 +89,7 @@ export async function createSettlementAction(data: {
   payeeId: string;
   amount: number;
 }) {
+  await enforceRateLimit(15, 60000); // Max 15 settlements per minute per IP
   await prisma.settlement.create({
     data: {
       apartmentId: "a1",
@@ -63,9 +103,85 @@ export async function createSettlementAction(data: {
   revalidatePath("/activity");
 }
 
+// Lazy Cron Recurring Auto-Posting Check
+export async function lazyTriggerRecurringExpenses() {
+  const now = new Date();
+
+  // Find recurring templates that are active and due
+  const recurringTemplates = await prisma.expense.findMany({
+    where: {
+      isRecurring: true,
+      nextRecurringDate: {
+        lte: now,
+      },
+      isDeleted: false,
+    },
+    include: {
+      participants: true,
+    },
+  });
+
+  if (recurringTemplates.length === 0) return;
+
+  await prisma.$transaction(async (tx) => {
+    for (const template of recurringTemplates) {
+      // Create a copy as a standard expense
+      const nextDate = template.nextRecurringDate || now;
+      const formattedMonth = nextDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      const description = `${template.description} (${formattedMonth})`;
+
+      const newExpense = await tx.expense.create({
+        data: {
+          apartmentId: template.apartmentId,
+          creatorId: template.creatorId,
+          description: description,
+          totalAmount: template.totalAmount,
+          splitType: template.splitType,
+          isRecurring: false, // Instance is not a template
+          createdAt: nextDate,
+        },
+      });
+
+      // Clone participants
+      await tx.expenseParticipant.createMany({
+        data: template.participants.map(p => ({
+          expenseId: newExpense.id,
+          userId: p.userId,
+          amountPaid: p.amountPaid,
+          amountOwed: p.amountOwed,
+        })),
+      });
+
+      // Update template to next recurring date (1st of next month)
+      const currentNext = template.nextRecurringDate || now;
+      const updatedNext = new Date(currentNext.getFullYear(), currentNext.getMonth() + 1, 1);
+
+      await tx.expense.update({
+        where: { id: template.id },
+        data: {
+          nextRecurringDate: updatedNext,
+        },
+      });
+    }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/activity");
+}
+
+// Fetch who you owe, excluding soft deleted expenses
 export async function getPeopleYouOweAction(userId: string) {
   const users = await prisma.user.findMany();
-  const participants = await prisma.expenseParticipant.findMany();
+  
+  // Exclude soft deleted expenses from balance calculation
+  const participants = await prisma.expenseParticipant.findMany({
+    where: {
+      expense: {
+        isDeleted: false,
+      },
+    },
+  });
+  
   const settlements = await prisma.settlement.findMany();
 
   const calculateUserNetBalance = (uId: string) => {
@@ -83,7 +199,6 @@ export async function getPeopleYouOweAction(userId: string) {
     return netBalance;
   };
 
-  // Greedy debt simplification
   const netBalances = new Map<string, number>();
   for (const u of users) {
     netBalances.set(u.id, calculateUserNetBalance(u.id));
@@ -118,14 +233,350 @@ export async function getPeopleYouOweAction(userId: string) {
     if ((workingBalances.get(creditorId) || 0) === 0) j++;
   }
 
-  // Filter who the current user owes
-  const peopleOwed = debts
+  return debts
     .filter(d => d.debtor === userId)
     .map(d => ({
       userId: d.creditor,
       amountOwed: d.amount,
       user: users.find(u => u.id === d.creditor),
     }));
-
-  return peopleOwed;
 }
+
+// Create Comment
+export async function createCommentAction(expenseId: string, userId: string, content: string) {
+  if (!content.trim()) throw new Error("Comment content cannot be empty");
+
+  await prisma.comment.create({
+    data: {
+      expenseId,
+      userId,
+      content,
+    },
+  });
+
+  revalidatePath(`/expense/${expenseId}`);
+}
+
+// Edit Expense (with Edit History)
+export async function updateExpenseAction(data: {
+  id: string;
+  editorId: string;
+  description: string;
+  totalAmount: number;
+}) {
+  const existing = await prisma.expense.findUnique({
+    where: { id: data.id },
+    include: { participants: true },
+  });
+
+  if (!existing) throw new Error("Expense not found");
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Create audit trail
+    await tx.expenseEditHistory.create({
+      data: {
+        expenseId: data.id,
+        editorId: data.editorId,
+        previousAmount: existing.totalAmount,
+        previousDescription: existing.description,
+      },
+    });
+
+    // 2. Update core expense data
+    await tx.expense.update({
+      where: { id: data.id },
+      data: {
+        description: data.description,
+        totalAmount: data.totalAmount,
+      },
+    });
+
+    // 3. Recalculate and update splits (equal split update for edit simplicity)
+    const numParticipants = existing.participants.length;
+    const splitAmount = Math.floor(data.totalAmount / numParticipants);
+    const remainder = data.totalAmount % numParticipants;
+
+    for (let i = 0; i < existing.participants.length; i++) {
+      const p = existing.participants[i];
+      await tx.expenseParticipant.update({
+        where: { id: p.id },
+        data: {
+          amountPaid: p.userId === existing.creatorId ? data.totalAmount : 0,
+          amountOwed: splitAmount + (i === 0 ? remainder : 0),
+        },
+      });
+    }
+  });
+
+  revalidatePath(`/expense/${data.id}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/activity");
+}
+
+// Soft Delete Expense
+export async function softDeleteExpenseAction(expenseId: string) {
+  await prisma.expense.update({
+    where: { id: expenseId },
+    data: { isDeleted: true },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/activity");
+}
+
+// Fetch Split Templates
+export async function getSplitTemplatesAction() {
+  return await prisma.splitTemplate.findMany();
+}
+
+// Create Split Template
+export async function createSplitTemplateAction(data: {
+  name: string;
+  creatorId: string;
+  splits: { userId: string; percent: number }[];
+}) {
+  return await prisma.splitTemplate.create({
+    data: {
+      name: data.name,
+      apartmentId: "a1",
+      creatorId: data.creatorId,
+      splits: JSON.stringify(data.splits),
+    },
+  });
+}
+
+export async function addRoommateAction(data: { name: string; email: string }) {
+  if (!data.name || !data.email) throw new Error("Name and Email are required");
+
+  const apartment = await prisma.apartment.findUnique({
+    where: { id: "a1" },
+    include: { members: true },
+  });
+
+  if (!apartment) throw new Error("Apartment not found");
+
+  if (apartment.plan === "FREE" && apartment.members.length >= 2) {
+    throw new Error("PAYWALL_TRIGGERED: Adding a 3rd roommate requires a Pro subscription ($4/roommate/month).");
+  }
+
+  // 1. Check if user already exists
+  let user = await prisma.user.findUnique({
+    where: { email: data.email },
+  });
+
+  if (!user) {
+    const hashedPassword = await bcrypt.hash("password", 10);
+    user = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+      },
+    });
+  }
+
+  // 2. Link user to the seeded apartment 'a1'
+  const isMember = await prisma.apartmentMember.findUnique({
+    where: {
+      apartmentId_userId: {
+        apartmentId: "a1",
+        userId: user.id,
+      },
+    },
+  });
+
+  if (!isMember) {
+    await prisma.apartmentMember.create({
+      data: {
+        apartmentId: "a1",
+        userId: user.id,
+      },
+    });
+  }
+
+  revalidatePath("/roommates");
+  revalidatePath("/dashboard");
+}
+
+export async function joinApartmentWithTokenAction(token: string, userId: string) {
+  // Find apartment by token
+  const apartment = await prisma.apartment.findUnique({
+    where: { inviteLinkToken: token },
+    include: { members: true },
+  });
+
+  if (!apartment) throw new Error("Invalid invite link token");
+
+  const isMember = apartment.members.some(m => m.userId === userId);
+  if (!isMember && apartment.plan === "FREE" && apartment.members.length >= 2) {
+    throw new Error("PAYWALL_TRIGGERED: Joining requires upgrading this apartment to Pro.");
+  }
+
+  // Check membership
+  const memberExists = await prisma.apartmentMember.findUnique({
+    where: {
+      apartmentId_userId: {
+        apartmentId: apartment.id,
+        userId: userId,
+      },
+    },
+  });
+
+  if (!memberExists) {
+    await prisma.apartmentMember.create({
+      data: {
+        apartmentId: apartment.id,
+        userId: userId,
+      },
+    });
+  }
+
+  revalidatePath("/dashboard");
+}
+
+export async function sendNudgeAction(senderId: string, recipientId: string, amountCents: number) {
+  // 1. Get sender and recipient names
+  const sender = await prisma.user.findUnique({ where: { id: senderId } });
+  const recipient = await prisma.user.findUnique({ where: { id: recipientId } });
+  
+  if (!sender || !recipient) throw new Error("Users not found");
+
+  // 2. Find the latest active expense in the apartment
+  const latestExpense = await prisma.expense.findFirst({
+    where: {
+      apartmentId: "a1",
+      isDeleted: false,
+      isRecurring: false,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!latestExpense) throw new Error("No active expense found to comment on");
+
+  // 3. Post a system comment
+  const amountStr = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amountCents / 100);
+
+  await prisma.comment.create({
+    data: {
+      expenseId: latestExpense.id,
+      userId: senderId,
+      content: `⚠️ SYSTEM NUDGE: Hey ${recipient.name}, friendly reminder to settle up ${amountStr}!`,
+    },
+  });
+
+  revalidatePath(`/expense/${latestExpense.id}`);
+  revalidatePath("/dashboard");
+}
+
+export async function upgradeApartmentAction(apartmentId: string) {
+  await prisma.apartment.update({
+    where: { id: apartmentId },
+    data: { plan: "PRO" },
+  });
+  revalidatePath("/roommates");
+  revalidatePath("/dashboard");
+}
+
+
+export async function createApartmentAction(name: string, creatorId: string) {
+  if (!name) throw new Error("Apartment name is required");
+
+  // Verify creatorId exists in the database to prevent foreign key errors from stale sessions
+  const userExists = await prisma.user.findUnique({
+    where: { id: creatorId },
+  });
+
+  if (!userExists) {
+    throw new Error("Your session is invalid or stale (database may have been reset). Please log out and log back in.");
+  }
+
+  // Generate a random token
+  const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+  const apartment = await prisma.apartment.create({
+    data: {
+      name,
+      inviteLinkToken: token,
+      members: {
+        create: {
+          userId: creatorId,
+        },
+      },
+    },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/roommates");
+  
+  return apartment;
+}
+
+export async function removeRoommateAction(apartmentId: string, userIdToRemove: string) {
+  // 1. Calculate the user's net balance in the apartment
+  const participants = await prisma.expenseParticipant.findMany({
+    where: {
+      userId: userIdToRemove,
+      expense: {
+        apartmentId,
+        isDeleted: false,
+        isRecurring: false,
+      },
+    },
+  });
+
+  let balance = 0;
+  for (const p of participants) {
+    balance += p.amountPaid;
+    balance -= p.amountOwed;
+  }
+
+  const settlementsPaid = await prisma.settlement.findMany({
+    where: {
+      apartmentId,
+      payerId: userIdToRemove,
+    },
+  });
+
+  const settlementsReceived = await prisma.settlement.findMany({
+    where: {
+      apartmentId,
+      payeeId: userIdToRemove,
+    },
+  });
+
+  for (const s of settlementsPaid) {
+    balance += s.amount;
+  }
+  for (const s of settlementsReceived) {
+    balance -= s.amount;
+  }
+
+  // 2. Check if balance is exactly 0
+  if (balance !== 0) {
+    const formattedBalance = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(Math.abs(balance) / 100);
+    
+    throw new Error(`Cannot remove roommate. Net balance must be exactly $0.00 (Current balance: ${balance > 0 ? '+' : '-'}${formattedBalance})`);
+  }
+
+  // 3. Remove membership
+  await prisma.apartmentMember.delete({
+    where: {
+      apartmentId_userId: {
+        apartmentId,
+        userId: userIdToRemove,
+      },
+    },
+  });
+
+  revalidatePath("/roommates");
+  revalidatePath("/dashboard");
+}
+
+
+

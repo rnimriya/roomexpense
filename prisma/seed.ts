@@ -10,6 +10,9 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   // Clear existing database
+  await prisma.expenseEditHistory.deleteMany({});
+  await prisma.comment.deleteMany({});
+  await prisma.splitTemplate.deleteMany({});
   await prisma.settlement.deleteMany({});
   await prisma.expenseParticipant.deleteMany({});
   await prisma.expense.deleteMany({});
@@ -53,6 +56,7 @@ async function main() {
       id: "a1",
       name: "Downtown Loft",
       inviteLinkToken: "invite-token-123",
+      plan: "PRO",
     },
   });
 
@@ -183,7 +187,68 @@ async function main() {
     },
   });
 
-  console.log("Database seeded successfully!");
+  // 6. Pre-seed V2 Comments
+  await prisma.comment.createMany({
+    data: [
+      {
+        expenseId: "e1",
+        userId: "u2", // Bob
+        content: "Did the internet plan change? It seems $5 more than last month.",
+      },
+      {
+        expenseId: "e1",
+        userId: "u1", // Alice
+        content: "Yes, they increased the base speed. I think it's worth it!",
+      },
+      {
+        expenseId: "e2",
+        userId: "u3", // Charlie
+        content: "Thanks for grabbing groceries Bob! The sourdough was amazing.",
+      }
+    ]
+  });
+
+  // 7. Pre-seed V2 Split Templates
+  await prisma.splitTemplate.create({
+    data: {
+      id: "t1",
+      name: "Rent 40/40/20",
+      apartmentId: "a1",
+      creatorId: "u1",
+      splits: JSON.stringify([
+        { userId: "u1", percent: 40 },
+        { userId: "u2", percent: 40 },
+        { userId: "u3", percent: 20 },
+      ])
+    }
+  });
+
+  // 8. Pre-seed a Recurring Expense template for lazy-cron demo
+  // Next month rent template (marked isRecurring, next recurring on Aug 1, 2026)
+  await prisma.expense.create({
+    data: {
+      id: "rec1",
+      apartmentId: "a1",
+      creatorId: "u1",
+      description: "Monthly Rent (Auto)",
+      totalAmount: 150000, // $1500.00
+      splitType: SplitType.PERCENTAGE,
+      isRecurring: true,
+      nextRecurringDate: new Date("2026-08-01T00:00:00.000Z"), // Ready to trigger on Aug 1, 2026
+      recurringInterval: "MONTHLY",
+      participants: {
+        createMany: {
+          data: [
+            { userId: "u1", amountPaid: 150000, amountOwed: 60000 }, // 40%
+            { userId: "u2", amountPaid: 0, amountOwed: 60000 },      // 40%
+            { userId: "u3", amountPaid: 0, amountOwed: 30000 },      // 20%
+          ],
+        },
+      },
+    },
+  });
+
+  console.log("Database seeded successfully with V2 mock data!");
 }
 
 main()

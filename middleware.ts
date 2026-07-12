@@ -7,6 +7,9 @@ export const config = {
     "/dashboard/:path*",
     "/expense/:path*",
     "/settle/:path*",
-    "/activity/:path*"
+    "/activity/:path*",
+    "/roommates/:path*",
+    "/invite/:path*",
+    "/apartment/:path*"
   ]
 };

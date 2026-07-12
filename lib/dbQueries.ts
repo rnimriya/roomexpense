@@ -4,14 +4,24 @@ export async function getDashboardData(userId: string) {
   // Load users
   const users = await prisma.user.findMany();
   
-  // Load all expense participants (needed for balance calculation)
-  const participants = await prisma.expenseParticipant.findMany();
+  // Load all expense participants (needed for balance calculation) - exclude soft deleted
+  const participants = await prisma.expenseParticipant.findMany({
+    where: {
+      expense: {
+        isDeleted: false,
+      }
+    }
+  });
   
   // Load all settlements
   const settlements = await prisma.settlement.findMany();
   
-  // Load all expenses
+  // Load all expenses - exclude soft deleted and templates
   const expenses = await prisma.expense.findMany({
+    where: {
+      isDeleted: false,
+      isRecurring: false,
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -48,7 +58,6 @@ export async function getDashboardData(userId: string) {
 
   const debts: { debtor: string; creditor: string; amount: number }[] = [];
   let i = 0, j = 0;
-  // Create copies of balances to mutate in greedy algo
   const workingBalances = new Map(netBalances);
 
   while (i < debtors.length && j < creditors.length) {

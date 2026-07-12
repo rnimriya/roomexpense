@@ -53,6 +53,9 @@ model User {
   expenseParticipants ExpenseParticipant[]
   settlementsPaid     Settlement[]          @relation("SettlementPayer")
   settlementsReceived Settlement[]          @relation("SettlementPayee")
+  comments            Comment[]
+  editHistories       ExpenseEditHistory[]
+  splitTemplates      SplitTemplate[]
 
   @@map("users")
 }
@@ -70,12 +73,14 @@ model Apartment {
   id              String   @id @default(cuid())
   name            String
   inviteLinkToken String   @unique @default(cuid())
+  plan            String   @default("FREE")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  members     ApartmentMember[]
-  expenses    Expense[]
-  settlements Settlement[]
+  members        ApartmentMember[]
+  expenses       Expense[]
+  settlements    Settlement[]
+  splitTemplates SplitTemplate[]
 
   @@map("apartments")
 }
@@ -99,18 +104,25 @@ enum SplitType {
 }
 
 model Expense {
-  id          String    @id @default(cuid())
-  apartmentId String
-  creatorId   String
-  description String
-  totalAmount Int       // Stored in cents
-  splitType   SplitType
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  apartmentId        String
+  creatorId          String
+  description        String
+  totalAmount        Int       // Stored in cents
+  splitType          SplitType
+  isDeleted          Boolean   @default(false)
+  receiptUrl         String?
+  isRecurring        Boolean   @default(false)
+  nextRecurringDate  DateTime?
+  recurringInterval  String?   // "MONTHLY"
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   apartment    Apartment            @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
   creator      User                 @relation("ExpenseCreator", fields: [creatorId], references: [id])
   participants ExpenseParticipant[]
+  comments     Comment[]
+  editHistories ExpenseEditHistory[]
 
   @@map("expenses")
 }
@@ -142,4 +154,45 @@ model Settlement {
   payee     User      @relation("SettlementPayee", fields: [payeeId], references: [id])
 
   @@map("settlements")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  expenseId String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model ExpenseEditHistory {
+  id                 String   @id @default(cuid())
+  expenseId          String
+  editorId           String
+  previousAmount     Int
+  previousDescription String
+  createdAt          DateTime @default(now())
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  editor  User    @relation(fields: [editorId], references: [id], onDelete: Cascade)
+
+  @@map("expense_edit_histories")
+}
+
+model SplitTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  apartmentId String
+  creatorId   String
+  splits      String   // JSON string representing splits: [{"userId": "...", "percent": 40}, ...]
+  createdAt   DateTime @default(now())
+
+  apartment Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  creator   User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("split_templates")
 }
