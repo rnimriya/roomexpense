@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { SplitType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { enforceRateLimit } from "@/lib/rateLimit";
 
@@ -64,7 +63,7 @@ export async function createExpenseAction(data: {
         creatorId: data.creatorId,
         description: data.description,
         totalAmount: data.totalAmount,
-        splitType: data.splitType as SplitType,
+        splitType: data.splitType,
         receiptUrl: data.receiptUrl,
         isRecurring: data.isRecurring || false,
         recurringInterval: data.recurringInterval,
