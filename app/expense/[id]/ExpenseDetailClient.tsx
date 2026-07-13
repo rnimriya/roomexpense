@@ -226,8 +226,14 @@ export default function ExpenseDetailClient({ expense, currentUserId, users }: {
           ) : (
             expense.comments.map((c: any) => (
               <div key={c.id} className={`flex gap-3 max-w-[85%] ${c.userId === currentUserId ? 'ml-auto flex-row-reverse' : ''}`}>
-                <div className={`p-3.5 rounded-2xl text-sm ${c.userId === currentUserId ? 'bg-zinc-100 text-zinc-950 rounded-tr-none' : 'bg-zinc-900 border border-zinc-850 rounded-tl-none'}`}>
-                  <p className="text-[10px] font-bold text-zinc-500 mb-1">{c.user.name}</p>
+                <div className={`p-3.5 rounded-2xl text-sm ${
+                  c.userId === currentUserId 
+                    ? 'bg-green-500 text-zinc-950 rounded-tr-none font-medium' 
+                    : 'bg-zinc-900 border border-zinc-850 rounded-tl-none'
+                }`}>
+                  <p className={`text-[10px] font-bold mb-1 ${
+                    c.userId === currentUserId ? 'text-green-950/70' : 'text-zinc-550'
+                  }`}>{c.user.name}</p>
                   <p className="leading-relaxed">{c.content}</p>
                 </div>
               </div>
