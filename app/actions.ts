@@ -28,7 +28,7 @@ export async function createExpenseAction(data: {
 
   if (data.splitType === "PERCENTAGE" && data.customSplits) {
     // Percentage Split
-    participantsData = users.map(u => {
+    participantsData = users.map((u: any) => {
       const custom = data.customSplits?.find(cs => cs.userId === u.id);
       const percent = custom?.percent || 0;
       const amountOwed = Math.round((data.totalAmount * percent) / 100);
@@ -42,7 +42,7 @@ export async function createExpenseAction(data: {
     // Equal Split (Default fallback)
     const splitAmount = Math.floor(data.totalAmount / numParticipants);
     const remainder = data.totalAmount % numParticipants;
-    participantsData = users.map((u, i) => ({
+    participantsData = users.map((u: any, i: number) => ({
       userId: u.id,
       amountPaid: u.id === data.creatorId ? data.totalAmount : 0,
       amountOwed: splitAmount + (i === 0 ? remainder : 0),
