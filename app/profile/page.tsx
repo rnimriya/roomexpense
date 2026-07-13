@@ -3,9 +3,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Shield, Bell, HelpCircle, ChevronRight, User } from "lucide-react";
+import Link from "next/link";
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
@@ -29,7 +29,7 @@ export default async function ProfilePage() {
   const apartmentPlan = user?.apartmentMembers?.[0]?.apartment?.plan || "FREE";
 
   return (
-    <div className="flex flex-col h-full bg-[#0c0e0e] text-zinc-50 relative pb-24">
+    <div className="flex flex-col h-full bg-[#0c0e0e] text-zinc-50 relative pb-24 select-none">
       {/* Header - Mock 3 style */}
       <div className="pt-8 pb-4 px-6 flex justify-between items-center border-b border-zinc-900 bg-[#0c0e0e]/80 backdrop-blur-md z-40 shrink-0">
         <div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ export default async function ProfilePage() {
                   <span className="text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider text-[#82d0ad] bg-[#82d0ad]/10 border border-[#82d0ad]/20">
                     {apartmentPlan}
                   </span>
-                  <span className="text-[10px] text-zinc-450 font-medium">
+                  <span className="text-[10px] text-zinc-455 font-medium">
                     {apartmentName}
                   </span>
                 </div>
@@ -91,67 +91,67 @@ export default async function ProfilePage() {
 
             <div className="space-y-3">
               {/* Profile details */}
-              <div className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex items-center justify-between hover:bg-[#1f2122] transition-colors cursor-pointer">
+              <Link href="/profile/account" className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex items-center justify-between hover:bg-[#1f2122] transition-colors cursor-pointer block">
                 <div className="flex items-center gap-3.5">
                   <div className="h-9 w-9 bg-zinc-900 border border-zinc-850 rounded-xl flex items-center justify-center">
                     <User className="h-4.5 w-4.5 text-zinc-400" />
                   </div>
                   <div>
                     <h4 className="font-extrabold text-zinc-150 text-xs uppercase tracking-wider">Account Information</h4>
-                    <p className="text-[9px] text-zinc-500 font-medium mt-0.5">Manage your personal email and name</p>
+                    <p className="text-[9px] text-zinc-550 font-medium mt-0.5">Manage your personal email and name</p>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-zinc-550" />
-              </div>
+              </Link>
 
               {/* Security */}
-              <div className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex items-center justify-between hover:bg-[#1f2122] transition-colors cursor-pointer">
+              <Link href="/profile/security" className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex items-center justify-between hover:bg-[#1f2122] transition-colors cursor-pointer block">
                 <div className="flex items-center gap-3.5">
                   <div className="h-9 w-9 bg-zinc-900 border border-zinc-850 rounded-xl flex items-center justify-center">
                     <Shield className="h-4.5 w-4.5 text-zinc-400" />
                   </div>
                   <div>
                     <h4 className="font-extrabold text-zinc-150 text-xs uppercase tracking-wider">Privacy & Security</h4>
-                    <p className="text-[9px] text-zinc-500 font-medium mt-0.5">Password updates and session logs</p>
+                    <p className="text-[9px] text-zinc-550 font-medium mt-0.5">Password updates and session logs</p>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-zinc-550" />
-              </div>
+              </Link>
 
               {/* Notifications */}
-              <div className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex items-center justify-between hover:bg-[#1f2122] transition-colors cursor-pointer">
+              <Link href="/profile/notifications" className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex items-center justify-between hover:bg-[#1f2122] transition-colors cursor-pointer block">
                 <div className="flex items-center gap-3.5">
                   <div className="h-9 w-9 bg-zinc-900 border border-zinc-850 rounded-xl flex items-center justify-center">
                     <Bell className="h-4.5 w-4.5 text-zinc-400" />
                   </div>
                   <div>
                     <h4 className="font-extrabold text-zinc-150 text-xs uppercase tracking-wider">Push Notifications</h4>
-                    <p className="text-[9px] text-zinc-500 font-medium mt-0.5">Receive nudge and activity alerts</p>
+                    <p className="text-[9px] text-zinc-550 font-medium mt-0.5">Receive nudge and activity alerts</p>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-zinc-550" />
-              </div>
+              </Link>
 
               {/* Help & Support */}
-              <div className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex items-center justify-between hover:bg-[#1f2122] transition-colors cursor-pointer">
+              <Link href="/profile/help" className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex items-center justify-between hover:bg-[#1f2122] transition-colors cursor-pointer block">
                 <div className="flex items-center gap-3.5">
                   <div className="h-9 w-9 bg-zinc-900 border border-zinc-850 rounded-xl flex items-center justify-center">
                     <HelpCircle className="h-4.5 w-4.5 text-zinc-400" />
                   </div>
                   <div>
                     <h4 className="font-extrabold text-zinc-150 text-xs uppercase tracking-wider">Help & Support</h4>
-                    <p className="text-[9px] text-zinc-500 font-medium mt-0.5">Frequently asked questions and guides</p>
+                    <p className="text-[9px] text-zinc-550 font-medium mt-0.5">Frequently asked questions and guides</p>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-zinc-550" />
-              </div>
+              </Link>
             </div>
           </div>
 
           {/* Secure Trust Badge */}
           <div className="border border-dashed border-zinc-850 rounded-[24px] p-8 text-center bg-[#0c0e0e] my-4 select-none">
             <h4 className="text-zinc-700 font-extrabold text-lg tracking-[0.15em] uppercase">Security</h4>
-            <p className="text-[9px] text-zinc-550 mt-1 leading-relaxed">End-to-end encrypted room splits</p>
+            <p className="text-[9px] text-zinc-555 mt-1 leading-relaxed">End-to-end encrypted room splits</p>
           </div>
 
         </div>

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { getPeopleYouOweAction, createSettlementAction } from "@/app/actions";
-import { RazorpayCheckoutModal } from "@/components/RazorpayCheckoutModal";
+import { StripeCheckoutModal } from "@/components/StripeCheckoutModal";
 
 export default function SettleUpPage() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function SettleUpPage() {
   const [amountStr, setAmountStr] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [razorpayOpen, setRazorpayOpen] = useState(false);
+  const [stripeOpen, setStripeOpen] = useState(false);
 
   const currentUserId = (session?.user as any)?.id || "u1";
 
@@ -168,13 +168,13 @@ export default function SettleUpPage() {
                 <div className="bg-[#181a1b] border border-zinc-900 p-5 rounded-[20px] space-y-4">
                   <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Choose Payment Method</p>
                   
-                  {/* Razorpay Trigger */}
+                  {/* Stripe Trigger */}
                   <button
                     type="button"
-                    onClick={() => setRazorpayOpen(true)}
+                    onClick={() => setStripeOpen(true)}
                     className="w-full h-12 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] font-black rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-xs cursor-pointer shadow-[0_0_20px_-5px_rgba(130,208,173,0.3)]"
                   >
-                    <CreditCard className="h-4.5 w-4.5" /> Pay with Razorpay (UPI / Card)
+                    <CreditCard className="h-4.5 w-4.5" /> Pay with Stripe Connect
                   </button>
 
                   <div className="flex gap-3">
@@ -196,7 +196,7 @@ export default function SettleUpPage() {
                     </a>
                   </div>
                   <p className="text-[9px] text-zinc-550 text-center leading-relaxed">
-                    Paying via Razorpay settles the balance natively immediately. Venmo/PayPal require confirming details in their apps.
+                    Paying via Stripe settles the balance natively immediately. Venmo/PayPal require confirming details in their apps.
                   </p>
                 </div>
               )}
@@ -213,13 +213,13 @@ export default function SettleUpPage() {
         )}
       </div>
 
-      {/* Razorpay Connect Modal */}
-      {razorpayOpen && (
-        <RazorpayCheckoutModal
-          open={razorpayOpen}
-          onOpenChange={setRazorpayOpen}
-          amount={Math.round(paymentAmount * 83 * 100)} // USD to INR conversion
-          description={`Settlement with ${payeeName}`}
+      {/* Stripe Connect Modal */}
+      {stripeOpen && (
+        <StripeCheckoutModal
+          open={stripeOpen}
+          onOpenChange={setStripeOpen}
+          amount={Math.round(paymentAmount * 100)} // amount in cents
+          payeeName={payeeName}
           onSuccess={handleStripeSuccess}
         />
       )}
