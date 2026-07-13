@@ -57,7 +57,7 @@ export default function SettleUpPage() {
   const paymentAmount = parseFloat(amountStr) || 0;
 
   // Payment deep links
-  const venmoLink = `https://venmo.com/?txn=pay&recipients=${encodeURIComponent(payeeEmail)}&amount=${paymentAmount}&note=${encodeURIComponent("FairShare Settlement")}`;
+  const venmoLink = `https://venmo.com/?txn=pay&recipients=${encodeURIComponent(payeeEmail)}&amount=${paymentAmount}&note=${encodeURIComponent("Rentify Settlement")}`;
   const paypalLink = `https://www.paypal.com/paypalme/${payeeUsername}/${paymentAmount}`;
 
   // Execute actual database logging upon stripe charge success

@@ -41,7 +41,7 @@ export function ExportCSVButton({ activities, users }: { activities: any[]; user
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `fairshare_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `rentify_export_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();

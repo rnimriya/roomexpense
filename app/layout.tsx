@@ -8,7 +8,7 @@ import { AppLayoutWrapper } from "@/components/AppLayoutWrapper";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FairShare",
+  title: "Rentify",
   description: "Split expenses easily",
 };
 

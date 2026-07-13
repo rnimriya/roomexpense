@@ -31,7 +31,7 @@ export default function LoginPage() {
     if (res?.error) {
       toast.error(res.error);
     } else {
-      toast.success("Welcome back to FairShare!");
+      toast.success("Welcome back to Rentify!");
       router.push("/dashboard");
       router.refresh();
     }

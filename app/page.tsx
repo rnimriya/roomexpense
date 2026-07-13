@@ -17,7 +17,7 @@ export default function LandingPage() {
             <div className="h-9 w-9 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center">
               <Wallet className="h-5 w-5 text-white" />
             </div>
-            <span className="text-base font-extrabold tracking-widest text-white uppercase">FairShare</span>
+            <span className="text-base font-extrabold tracking-widest text-white uppercase">Rentify</span>
           </div>
           <div className="flex items-center gap-6">
             <Link 
@@ -80,7 +80,7 @@ export default function LandingPage() {
               <div className="rounded-[24px] overflow-hidden border border-zinc-900 bg-[#121212]">
                 <img 
                   src="/images/dashboard.png" 
-                  alt="FairShare Dashboard Preview" 
+                  alt="Rentify Dashboard Preview" 
                   className="w-full h-auto object-cover select-none pointer-events-none"
                 />
               </div>

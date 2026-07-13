@@ -53,7 +53,7 @@ export function SimplifiedDebtsCard({
               );
             })}
             <p className="text-[9px] text-zinc-550 leading-relaxed pt-1.5 italic">
-              FairShare runs a greedy network flow algorithm. Instead of multiple Venmo trades, settle up using these simplified paths.
+              Rentify runs a greedy network flow algorithm. Instead of multiple Venmo trades, settle up using these simplified paths.
             </p>
           </div>
         )}

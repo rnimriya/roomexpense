@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("FairShare MVP Critical Paths", () => {
+test.describe("Rentify MVP Critical Paths", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to Login Page
     await page.goto("http://localhost:3000/login");
