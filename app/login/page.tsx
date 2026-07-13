@@ -64,7 +64,7 @@ export default function LoginPage() {
           <Button 
             type="button"
             variant="outline"
-            onClick={() => toast.info("Google Authentication is simulated. Please use the email login below.")}
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
             className="w-full h-12 bg-transparent border-zinc-800 text-zinc-200 hover:bg-white/5 rounded-full text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -79,7 +79,7 @@ export default function LoginPage() {
           <Button 
             type="button"
             variant="outline"
-            onClick={() => toast.info("Facebook Authentication is simulated. Please use the email login below.")}
+            onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}
             className="w-full h-12 bg-transparent border-zinc-800 text-zinc-200 hover:bg-white/5 rounded-full text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
             <svg className="h-4 w-4 fill-[#1877F2]" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@ export default function LoginPage() {
           <Button 
             type="button"
             variant="outline"
-            onClick={() => toast.info("Apple ID Authentication is simulated. Please use the email login below.")}
+            onClick={() => signIn("apple", { callbackUrl: "/dashboard" })}
             className="w-full h-12 bg-transparent border-zinc-800 text-zinc-200 hover:bg-white/5 rounded-full text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"
           >
             <svg className="h-4 w-4 fill-white" viewBox="0 0 24 24">
