@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, ArrowRight, Check, Paperclip, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Paperclip, Receipt, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { createExpenseAction, getSplitTemplatesAction } from "@/app/actions";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function AddExpensePage() {
   const router = useRouter();
@@ -42,16 +43,16 @@ export default function AddExpensePage() {
   const handleKeypadClick = (val: string) => {
     if (val === "BACKSPACE") {
       setAmountString(prev => (prev.length > 1 ? prev.slice(0, -1) : "0"));
+    } else if (val === ".") {
+      // ignore decimal since amountString represents cents natively
+      return;
     } else {
       setAmountString(prev => (prev === "0" ? val : prev + val));
     }
   };
 
   const amountCents = parseInt(amountString, 10);
-  const formattedAmount = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amountCents / 100);
+  const formattedAmount = (amountCents / 100).toFixed(2);
 
   // Attach a mock receipt image
   const handleAttachMockReceipt = () => {
@@ -60,7 +61,7 @@ export default function AddExpensePage() {
     toast.success("Mock receipt attached!");
   };
 
-  // Simulate OCR Scanning (Phase 111)
+  // Simulate OCR Scanning - Mock 2
   const handleOCRScan = () => {
     if (scanning) return;
     setScanning(true);
@@ -114,74 +115,98 @@ export default function AddExpensePage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-950 text-zinc-50 relative overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between p-6">
-        <button onClick={() => {
+    <div className="flex flex-col h-screen bg-[#0c0e0e] text-zinc-50 relative overflow-hidden select-none">
+      {/* Header - Mock 2 */}
+      <div className="flex items-center justify-between p-6 bg-[#0c0e0e] z-40 shrink-0">
+        <button 
+          onClick={() => {
             if (step > 1) setStep((s) => (s - 1) as any);
             else router.push("/dashboard");
-        }} className="p-2 -ml-2 rounded-full hover:bg-zinc-900 transition-colors">
-          <X className="h-6 w-6 text-zinc-400" />
+          }} 
+          className="text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-wider cursor-pointer"
+        >
+          close
         </button>
-        <span className="text-sm font-bold text-zinc-500 uppercase tracking-widest">
-          Step {step} of 3
+        <span className="font-extrabold text-white text-base tracking-wide">
+          {step === 1 ? "Add Expense" : `Step ${step} of 3`}
         </span>
-        <div className="w-10"></div>
+        <Avatar className="h-8 w-8 border border-[#82d0ad]/20">
+          <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-bold text-xs">
+            U
+          </AvatarFallback>
+        </Avatar>
       </div>
 
-      {/* Screen 1: Amount */}
+      {/* Screen 1: Amount entry - Mock 2 */}
       {step === 1 && (
-        <div className="flex flex-col flex-1 pb-safe">
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <p className="text-zinc-500 font-medium mb-4 uppercase tracking-widest text-sm">Amount</p>
-            <h1 className="text-6xl font-black tracking-tighter text-zinc-100">
-              {formattedAmount}
-            </h1>
-          </div>
-          
-          <div className="px-6 pb-8">
-            {/* Quick scan receipt button */}
+        <div className="flex flex-col flex-1 pb-safe px-6 justify-between">
+          <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+            <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px]">
+              ENTER AMOUNT
+            </p>
+            <div className="flex items-baseline justify-center text-[#82d0ad] relative">
+              <span className="text-3xl font-black mr-1.5 select-none">$</span>
+              <span className="text-6.5xl font-black tracking-tight leading-none">
+                {formattedAmount}
+              </span>
+            </div>
+
+            {/* Scan receipt button - Mock 2 */}
             <button
               type="button"
               onClick={handleOCRScan}
               disabled={scanning}
-              className="w-full h-14 bg-zinc-900 border border-zinc-850 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-200 font-semibold rounded-2xl flex items-center justify-center gap-2 mb-4 active:scale-95 transition-all text-sm cursor-pointer disabled:opacity-50"
+              className="px-6 py-3 bg-[#1e2021] border border-zinc-900 hover:bg-zinc-850 hover:border-zinc-800 text-zinc-300 rounded-xl flex items-center justify-center gap-2 mb-4 active:scale-95 transition-all text-xs font-extrabold cursor-pointer disabled:opacity-50"
             >
-              <Sparkles className="h-4 w-4 text-green-500" />
-              {scanning ? "Parsing receipt text..." : "Scan Receipt with OCR"}
+              <Receipt className="h-4.5 w-4.5 text-[#82d0ad]" />
+              <span className="text-[#82d0ad] tracking-wide">
+                {scanning ? "Parsing receipt text..." : "Scan Receipt with OCR"}
+              </span>
             </button>
-
-            <div className="grid grid-cols-3 gap-3 mb-6">
+          </div>
+          
+          <div className="pb-8 space-y-6">
+            {/* 3x4 numeric keypad - Mock 2 */}
+            <div className="grid grid-cols-3 gap-y-4 gap-x-8 max-w-xs mx-auto">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                 <button
                   key={num}
+                  type="button"
                   onClick={() => handleKeypadClick(num.toString())}
-                  className="h-16 rounded-2xl bg-zinc-900/50 hover:bg-zinc-800 text-2xl font-semibold text-zinc-100 transition-colors active:scale-95"
+                  className="h-14 hover:bg-zinc-900/40 text-2xl font-extrabold text-zinc-100 transition-colors active:scale-90 flex items-center justify-center rounded-full cursor-pointer"
                 >
                   {num}
                 </button>
               ))}
-              <div />
               <button
+                type="button"
+                onClick={() => handleKeypadClick(".")}
+                className="h-14 text-2xl font-extrabold text-zinc-400 flex items-center justify-center active:scale-90 rounded-full cursor-pointer"
+              >
+                .
+              </button>
+              <button
+                type="button"
                 onClick={() => handleKeypadClick("0")}
-                className="h-16 rounded-2xl bg-zinc-900/50 hover:bg-zinc-800 text-2xl font-semibold text-zinc-100 transition-colors active:scale-95"
+                className="h-14 hover:bg-zinc-900/40 text-2xl font-extrabold text-zinc-100 transition-colors active:scale-90 flex items-center justify-center rounded-full cursor-pointer"
               >
                 0
               </button>
               <button
+                type="button"
                 onClick={() => handleKeypadClick("BACKSPACE")}
-                className="h-16 rounded-2xl bg-zinc-900/50 hover:bg-zinc-800 text-xl font-semibold text-zinc-400 flex items-center justify-center transition-colors active:scale-95"
+                className="h-14 text-[11px] font-black text-zinc-400 uppercase tracking-widest flex items-center justify-center active:scale-90 rounded-full cursor-pointer"
               >
-                ⌫
+                backspace
               </button>
             </div>
             
             <Button 
               onClick={() => setStep(2)} 
               disabled={amountCents === 0}
-              className="w-full h-14 bg-zinc-100 text-zinc-950 hover:bg-zinc-200 text-lg font-bold rounded-2xl"
+              className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-black rounded-xl cursor-pointer active:scale-98"
             >
-              Continue <ArrowRight className="ml-2 h-5 w-5" />
+              Continue
             </Button>
           </div>
         </div>
@@ -189,16 +214,16 @@ export default function AddExpensePage() {
 
       {/* Screen 2: Description & Receipt Attachment */}
       {step === 2 && (
-        <div className="flex flex-col flex-1 px-6 pb-8">
+        <div className="flex flex-col flex-1 px-6 pb-8 justify-between text-left">
           <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm mx-auto space-y-8">
             <div className="text-center w-full">
-              <p className="text-zinc-500 font-medium mb-4 uppercase tracking-widest text-sm">What is this for?</p>
+              <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mb-4">WHAT IS THIS FOR?</p>
               <Input
                 autoFocus
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g. Internet Bill"
-                className="h-16 bg-zinc-900/50 border-zinc-850 text-2xl text-center placeholder:text-zinc-700 font-semibold rounded-2xl focus-visible:ring-zinc-700"
+                className="h-14 bg-[#1e2021] border-zinc-900 text-lg text-center placeholder:text-zinc-700 font-bold rounded-xl focus-visible:ring-zinc-800"
               />
             </div>
 
@@ -207,9 +232,9 @@ export default function AddExpensePage() {
               <button 
                 type="button"
                 onClick={handleAttachMockReceipt}
-                className={`w-full p-4 rounded-xl border border-dashed flex items-center justify-center gap-2 text-sm font-semibold transition-all ${
+                className={`w-full p-4 rounded-xl border border-dashed flex items-center justify-center gap-2 text-xs font-bold transition-all ${
                   receiptUrl 
-                    ? 'border-green-500/50 bg-green-500/5 text-green-500' 
+                    ? 'border-[#82d0ad]/50 bg-[#82d0ad]/5 text-[#82d0ad]' 
                     : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/30 text-zinc-400 hover:text-zinc-300'
                 }`}
               >
@@ -218,22 +243,22 @@ export default function AddExpensePage() {
               </button>
               
               {receiptUrl && (
-                <p className="text-center text-[10px] text-zinc-500 mt-2 truncate max-w-xs mx-auto">
+                <p className="text-center text-[9px] text-zinc-500 mt-2 truncate max-w-xs mx-auto">
                   Receipt preview loaded successfully.
                 </p>
               )}
             </div>
 
             {/* V2 Recurring check */}
-            <div className="flex items-center gap-3 bg-zinc-900/40 p-4 rounded-2xl border border-zinc-905 w-full">
+            <div className="flex items-center gap-3 bg-[#181a1b] p-4.5 rounded-xl border border-zinc-900 w-full">
               <input 
                 type="checkbox"
                 id="isRecurring"
                 checked={isRecurring}
                 onChange={(e) => setIsRecurring(e.target.checked)}
-                className="h-5 w-5 rounded border-zinc-800 bg-zinc-955 text-green-500 focus:ring-green-500/20"
+                className="h-5 w-5 rounded border-zinc-800 bg-zinc-900 text-[#82d0ad] focus:ring-[#82d0ad]/20"
               />
-              <label htmlFor="isRecurring" className="text-sm font-semibold text-zinc-300 cursor-pointer">
+              <label htmlFor="isRecurring" className="text-xs font-bold text-zinc-300 cursor-pointer">
                 Repeat this expense monthly (Rent/Internet)
               </label>
             </div>
@@ -242,18 +267,18 @@ export default function AddExpensePage() {
           <Button 
             onClick={() => setStep(3)} 
             disabled={description.trim() === ""}
-            className="w-full h-14 bg-zinc-100 text-zinc-950 hover:bg-zinc-200 text-lg font-bold rounded-2xl mt-auto"
+            className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-black rounded-xl mt-auto cursor-pointer active:scale-98"
           >
-            Continue <ArrowRight className="ml-2 h-5 w-5" />
+            Continue
           </Button>
         </div>
       )}
 
       {/* Screen 3: Split Logic & Templates */}
       {step === 3 && (
-        <div className="flex flex-col flex-1 px-6 pb-8 overflow-y-auto">
+        <div className="flex flex-col flex-1 px-6 pb-8 overflow-y-auto text-left justify-between">
           <div className="flex-1 mt-6 space-y-6">
-            <p className="text-zinc-500 font-medium uppercase tracking-widest text-sm text-center">How to split?</p>
+            <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] text-center">HOW TO SPLIT?</p>
             
             <div className="space-y-3">
               {[
@@ -269,18 +294,18 @@ export default function AddExpensePage() {
                   }}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     splitType === type.id && !selectedTemplateId
-                      ? 'border-green-500 bg-green-500/10' 
-                      : 'border-zinc-900 bg-zinc-900/20 hover:border-zinc-850'
+                      ? 'border-[#82d0ad] bg-[#82d0ad]/5' 
+                      : 'border-zinc-900 bg-[#181a1b] hover:border-zinc-800'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className={`font-bold text-sm ${splitType === type.id && !selectedTemplateId ? 'text-green-500' : 'text-zinc-100'}`}>
+                      <h3 className={`font-bold text-sm ${splitType === type.id && !selectedTemplateId ? 'text-[#82d0ad]' : 'text-zinc-100'}`}>
                         {type.label}
                       </h3>
-                      <p className="text-xs text-zinc-500 mt-0.5">{type.desc}</p>
+                      <p className="text-[10px] text-zinc-500 mt-0.5">{type.desc}</p>
                     </div>
-                    {splitType === type.id && !selectedTemplateId && <Check className="h-4 w-4 text-green-500" />}
+                    {splitType === type.id && !selectedTemplateId && <Check className="h-4 w-4 text-[#82d0ad]" />}
                   </div>
                 </div>
               ))}
@@ -300,20 +325,20 @@ export default function AddExpensePage() {
                       }}
                       className={`p-4 rounded-xl border cursor-pointer transition-all ${
                         selectedTemplateId === template.id
-                          ? 'border-green-500 bg-green-500/10' 
-                          : 'border-zinc-900 bg-zinc-900/20 hover:border-zinc-850'
+                          ? 'border-[#82d0ad] bg-[#82d0ad]/5' 
+                          : 'border-zinc-900 bg-[#181a1b] hover:border-zinc-800'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className={`font-bold text-sm ${selectedTemplateId === template.id ? 'text-green-500' : 'text-zinc-100'}`}>
+                          <h3 className={`font-bold text-sm ${selectedTemplateId === template.id ? 'text-[#82d0ad]' : 'text-zinc-100'}`}>
                             {template.name}
                           </h3>
-                          <p className="text-xs text-zinc-500 mt-0.5">
+                          <p className="text-[10px] text-zinc-500 mt-0.5">
                             Saved percentage ratio for rent splitting.
                           </p>
                         </div>
-                        {selectedTemplateId === template.id && <Check className="h-4 w-4 text-green-500" />}
+                        {selectedTemplateId === template.id && <Check className="h-4 w-4 text-[#82d0ad]" />}
                       </div>
                     </div>
                   ))}
@@ -323,8 +348,8 @@ export default function AddExpensePage() {
             
             {/* MVP Note for custom math */}
             {splitType !== "EQUAL" && !selectedTemplateId && (
-              <div className="p-3 bg-zinc-900/40 rounded-xl border border-zinc-900 text-xs text-zinc-500 text-center">
-                Custom exact or manual splits default to Equal Splits in this V2 MVP. Select a Saved Template above to apply complex percentages.
+              <div className="p-3 bg-[#181a1b] rounded-xl border border-zinc-900 text-[10px] text-zinc-500 text-center">
+                Custom exact or manual splits default to Equal Splits in this MVP. Select a Saved Template above to apply complex percentages.
               </div>
             )}
           </div>
@@ -332,9 +357,9 @@ export default function AddExpensePage() {
           <Button 
             onClick={handleSubmit} 
             disabled={loading}
-            className="w-full h-14 bg-green-500 text-zinc-950 hover:bg-green-400 text-lg font-bold rounded-2xl mt-6 shrink-0"
+            className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-black rounded-xl mt-6 shrink-0 cursor-pointer active:scale-98"
           >
-            {loading ? "Adding..." : "Add Expense"} <Check className="ml-2 h-5 w-5" />
+            {loading ? "Adding..." : "Add Expense"}
           </Button>
         </div>
       )}

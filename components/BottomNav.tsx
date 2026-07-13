@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, PlusCircle, Activity, LogOut } from "lucide-react";
+import { Home, Receipt, Users, User, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -20,41 +20,53 @@ export function BottomNav() {
     return null;
   }
 
+  const navItems = [
+    { href: "/dashboard", label: "Home", icon: Home },
+    { href: "/activity", label: "Activity", icon: Receipt },
+    { href: "/roommates", label: "Roommates", icon: Users },
+  ];
+
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[432px] bg-[#1a1a1c]/80 backdrop-blur-xl border border-[#2c2c2e]/60 shadow-xl rounded-full px-2 py-1.5 z-50 select-none">
-      <div className="flex justify-around items-center h-12">
-        <Link
-          href="/dashboard"
-          className={cn(
-            "flex flex-col items-center justify-center w-12 h-11 rounded-full text-zinc-500 hover:text-zinc-200 transition-all",
-            pathname === "/dashboard" && "text-white bg-white/5 border border-white/5"
-          )}
-        >
-          <Home className="h-4.5 w-4.5" />
-        </Link>
-        <Link
-          href="/expense/new"
-          className={cn(
-            "flex flex-col items-center justify-center w-12 h-11 rounded-full text-zinc-500 hover:text-zinc-200 transition-all",
-            pathname === "/expense/new" && "text-white bg-white/5 border border-white/5"
-          )}
-        >
-          <PlusCircle className="h-4.5 w-4.5" />
-        </Link>
-        <Link
-          href="/activity"
-          className={cn(
-            "flex flex-col items-center justify-center w-12 h-11 rounded-full text-zinc-500 hover:text-zinc-200 transition-all",
-            pathname === "/activity" && "text-white bg-white/5 border border-white/5"
-          )}
-        >
-          <Activity className="h-4.5 w-4.5" />
-        </Link>
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-[#0c0e0e] border-t border-zinc-900/60 shadow-2xl px-3 py-2.5 z-50 select-none pb-safe">
+      <div className="flex justify-around items-end h-14">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-col items-center justify-center w-20 text-center transition-all group"
+            >
+              <div className={cn(
+                "h-7 w-14 rounded-full flex items-center justify-center transition-all duration-250",
+                isActive 
+                  ? "bg-[#82d0ad] text-zinc-950" 
+                  : "text-zinc-500 group-hover:text-zinc-350"
+              )}>
+                <Icon className="h-4.5 w-4.5" />
+              </div>
+              <span className={cn(
+                "text-[9px] font-bold uppercase tracking-wider mt-1.5",
+                isActive ? "text-[#82d0ad]" : "text-zinc-550"
+              )}>
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+
+        {/* Log Out Button */}
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex flex-col items-center justify-center w-12 h-11 rounded-full text-zinc-500 hover:text-red-400 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center w-20 text-center transition-all group cursor-pointer"
         >
-          <LogOut className="h-4.5 w-4.5" />
+          <div className="h-7 w-14 rounded-full flex items-center justify-center text-zinc-500 group-hover:text-red-400 transition-all duration-250">
+            <LogOut className="h-4.5 w-4.5" />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-wider mt-1.5 text-zinc-550">
+            Exit
+          </span>
         </button>
       </div>
     </div>

@@ -97,33 +97,33 @@ export default function SettleUpPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-950 text-zinc-50 relative overflow-hidden">
+    <div className="flex flex-col h-screen bg-[#0c0e0e] text-zinc-50 relative overflow-hidden select-none">
       {/* Header */}
       <div className="flex items-center justify-between p-6">
         <button onClick={() => router.push("/dashboard")} className="p-2 -ml-2 rounded-full hover:bg-zinc-900 transition-colors">
-          <ArrowLeft className="h-6 w-6 text-zinc-400" />
+          <ArrowLeft className="h-5 w-5 text-zinc-400" />
         </button>
-        <span className="font-bold text-zinc-100 tracking-wider">
+        <span className="font-extrabold text-white text-base tracking-wide">
           Settle Up
         </span>
         <div className="w-10"></div>
       </div>
 
-      <div className="flex-1 px-6 pt-4 pb-8 overflow-y-auto">
+      <div className="flex-1 px-6 pt-4 pb-8 overflow-y-auto text-left">
         {fetching ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-zinc-550 font-medium">Loading your debts...</p>
+            <p className="text-zinc-550 font-medium text-xs">Loading your debts...</p>
           </div>
         ) : peopleYouOwe.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="h-24 w-24 bg-green-500/10 rounded-full flex items-center justify-center mb-6">
-              <Check className="h-12 w-12 text-green-500" />
+          <div className="flex flex-col items-center justify-center h-[70vh] text-center max-w-xs mx-auto">
+            <div className="h-16 w-16 bg-[#82d0ad]/10 rounded-full flex items-center justify-center mb-6">
+              <Check className="h-8 w-8 text-[#82d0ad]" />
             </div>
-            <h2 className="text-2xl font-bold text-zinc-100 mb-2">You're all settled!</h2>
-            <p className="text-zinc-500">You don't owe anyone right now.</p>
+            <h2 className="text-xl font-black text-white mb-2">You're all settled!</h2>
+            <p className="text-xs text-zinc-500 leading-relaxed">You don't owe anyone right now.</p>
             <Button 
               onClick={() => router.push("/dashboard")}
-              className="mt-8 h-12 px-8 bg-zinc-100 text-zinc-950 font-bold rounded-xl"
+              className="mt-8 h-13 px-8 bg-[#82d0ad] text-zinc-950 font-black rounded-xl w-full"
             >
               Go to Dashboard
             </Button>
@@ -132,9 +132,9 @@ export default function SettleUpPage() {
           <form onSubmit={handleSubmit} className="flex flex-col h-full space-y-6">
             <div className="space-y-6 flex-1">
               <div>
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block mb-3">Who did you pay?</label>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] block mb-3">WHO DID YOU PAY?</label>
                 <Select value={payeeId} onValueChange={(val) => setPayeeId(val || "")}>
-                  <SelectTrigger className="w-full h-16 bg-zinc-900/50 border-zinc-800 text-lg rounded-2xl px-4 focus:ring-green-500/20">
+                  <SelectTrigger className="w-full h-14 bg-[#1e2021] border-zinc-900 text-sm rounded-xl px-4 focus:ring-[#82d0ad]/20 text-zinc-200">
                     <SelectValue placeholder="Select roommate" />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
@@ -148,11 +148,9 @@ export default function SettleUpPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block mb-3">Amount</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <DollarSign className="h-6 w-6 text-zinc-400" />
-                  </div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] block mb-3">AMOUNT</label>
+                <div className="relative flex items-center">
+                  <DollarSign className="absolute left-4 h-5 w-5 text-zinc-500" />
                   <Input
                     type="number"
                     step="0.01"
@@ -160,23 +158,23 @@ export default function SettleUpPage() {
                     value={amountStr}
                     onChange={(e) => setAmountStr(e.target.value)}
                     placeholder="0.00"
-                    className="w-full h-16 bg-zinc-900/50 border-zinc-800 text-2xl font-semibold rounded-2xl pl-12 focus-visible:ring-green-500/50"
+                    className="w-full h-14 bg-[#1e2021] border-zinc-900 text-lg font-bold rounded-xl pl-11 focus-visible:ring-[#82d0ad]/50 text-zinc-200"
                   />
                 </div>
               </div>
 
               {/* V2 Payment Integrations Launch UI */}
               {payeeId && paymentAmount > 0 && (
-                <div className="bg-zinc-900/30 border border-zinc-900 p-5 rounded-2xl space-y-4">
-                  <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Choose Payment Method</p>
+                <div className="bg-[#181a1b] border border-zinc-900 p-5 rounded-[20px] space-y-4">
+                  <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Choose Payment Method</p>
                   
                   {/* Razorpay Trigger */}
                   <button
                     type="button"
                     onClick={() => setRazorpayOpen(true)}
-                    className="w-full h-12 bg-[#0584eb] text-white font-bold rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-sm cursor-pointer shadow-[0_0_20px_-5px_rgba(5,132,235,0.3)]"
+                    className="w-full h-12 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] font-black rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-xs cursor-pointer shadow-[0_0_20px_-5px_rgba(130,208,173,0.3)]"
                   >
-                    <CreditCard className="h-4 w-4" /> Pay with Razorpay (UPI / Card)
+                    <CreditCard className="h-4.5 w-4.5" /> Pay with Razorpay (UPI / Card)
                   </button>
 
                   <div className="flex gap-3">
@@ -207,7 +205,7 @@ export default function SettleUpPage() {
             <Button 
               type="submit"
               disabled={!payeeId || !amountStr || parseFloat(amountStr) <= 0 || loading}
-              className="w-full h-14 bg-zinc-100 text-zinc-950 hover:bg-zinc-200 text-lg font-bold rounded-2xl mt-auto shrink-0"
+              className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-black rounded-xl mt-auto shrink-0 cursor-pointer active:scale-98"
             >
               {loading ? "Recording..." : "Record Manual Cash Payment"}
             </Button>
