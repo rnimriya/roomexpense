@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
-import { ArrowUpRight, ArrowDownLeft, Plus } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Plus, Wallet } from "lucide-react";
 import { lazyTriggerRecurringExpenses, lazyTriggerMonthlySummaryEmail } from "@/app/actions";
 import { NudgeButton } from "@/components/NudgeButton";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -65,9 +65,9 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
   }));
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950 text-zinc-50">
+    <div className="flex flex-col h-full bg-[#121212] text-zinc-50">
       {/* Brand Navigation Bar - Structured Top Header */}
-      <div className="pt-8 pb-4 px-6 flex justify-between items-center border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md z-40 shrink-0">
+      <div className="pt-8 pb-4 px-6 flex justify-between items-center border-b border-zinc-900 bg-[#121212]/80 backdrop-blur-md z-40 shrink-0">
         <h1 className="text-lg font-black tracking-widest text-zinc-100 uppercase">
           FairShare
         </h1>
@@ -97,21 +97,71 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
           </div>
         )}
 
-        {/* Balance Section with subtle radial background styling */}
-        <div className="py-10 px-6 text-center bg-zinc-900/10 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-900/30 via-transparent to-transparent pointer-events-none" />
-          <p className="text-[10px] font-bold text-zinc-500 mb-2 tracking-widest uppercase relative z-10">
-            {session.user.name || "Your"}'s Balance
-          </p>
-          <h1 className={`text-6xl font-black tracking-tighter relative z-10 ${netBalance >= 0 ? 'text-green-500 drop-shadow-[0_0_20px_rgba(34,197,94,0.15)]' : 'text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.15)]'}`}>
-            {netBalance < 0 ? '-' : ''}{formatCurrency(netBalance)}
-          </h1>
-          <p className="text-xs text-zinc-400 mt-3 font-semibold relative z-10">
-            {netBalance > 0 ? "You are owed overall" : netBalance < 0 ? "You owe overall" : "You're all settled up"}
-          </p>
+        {/* Balance Wallet Card - Klove Inspired */}
+        <div className="pt-6 px-6 pb-2">
+          <div className="bg-[#1c1c1e] border border-zinc-850 rounded-[28px] p-6 relative overflow-hidden shadow-xl shadow-black/45">
+            {/* Shimmer overlay */}
+            <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-green-500/5 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex justify-between items-center mb-6 relative z-10">
+              <div className="flex items-center gap-1.5 text-zinc-450 text-xs font-bold uppercase tracking-wider">
+                <Wallet className="h-4 w-4" /> Wallet
+              </div>
+              <div className="h-6 w-6 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-450 text-sm font-bold select-none cursor-pointer hover:bg-zinc-850 transition-colors">
+                +
+              </div>
+            </div>
+
+            <div className="mb-4 relative z-10">
+              <p className="text-[10px] text-zinc-550 font-bold uppercase tracking-wider mb-1">
+                Main Balance
+              </p>
+              <h1 className={`text-4xl font-black tracking-tight ${
+                netBalance >= 0 ? 'text-green-500' : 'text-red-500'
+              }`}>
+                {netBalance < 0 ? '-' : ''}{formatCurrency(netBalance)}
+              </h1>
+            </div>
+
+            <div className="flex justify-between items-end mt-8 relative z-10">
+              <div>
+                <p className="text-[10px] text-zinc-450 font-extrabold uppercase tracking-widest">
+                  {session.user.name || "Roommate"}
+                </p>
+                <p className="text-[10px] text-zinc-400 font-semibold mt-1">
+                  {netBalance > 0 ? "Owed overall" : netBalance < 0 ? "You owe overall" : "All settled up"}
+                </p>
+              </div>
+              
+              {/* Card brand icons - mock Mastercard circles logo */}
+              <div className="flex -space-x-1.5 select-none opacity-85">
+                <div className="h-5 w-5 rounded-full bg-[#ff5f00]" />
+                <div className="h-5 w-5 rounded-full bg-[#f79e1b]/90" />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <Separator className="bg-zinc-900" />
+        {/* Quick Actions (Send / Receive) - Klove Inspired */}
+        <div className="px-6 pt-4 pb-2">
+          <div className="grid grid-cols-2 gap-3.5">
+            <Link href="/settle" className="bg-[#1c1c1e] hover:bg-[#242426] border border-zinc-850 rounded-[24px] p-4.5 flex flex-col justify-between h-28 transition-all active:scale-95 group">
+              <div className="h-9 w-9 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center group-hover:bg-zinc-850 transition-colors">
+                <ArrowUpRight className="h-4.5 w-4.5 text-zinc-100" />
+              </div>
+              <span className="text-xs font-black text-zinc-350">Send / Settle</span>
+            </Link>
+            <Link href="/expense/new" className="bg-[#1c1c1e] hover:bg-[#242426] border border-zinc-850 rounded-[24px] p-4.5 flex flex-col justify-between h-28 transition-all active:scale-95 group">
+              <div className="h-9 w-9 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center group-hover:bg-zinc-850 transition-colors">
+                <ArrowDownLeft className="h-4.5 w-4.5 text-zinc-100" />
+              </div>
+              <span className="text-xs font-black text-zinc-350">Add Expense</span>
+            </Link>
+          </div>
+        </div>
+
+        <Separator className="bg-zinc-900/50 my-2" />
 
         {/* Monthly Summary Banner */}
         <div className="pt-6">

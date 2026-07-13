@@ -133,7 +133,7 @@ export default function SettleUpPage() {
             <div className="space-y-6 flex-1">
               <div>
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block mb-3">Who did you pay?</label>
-                <Select value={payeeId} onValueChange={setPayeeId}>
+                <Select value={payeeId} onValueChange={(val) => setPayeeId(val || "")}>
                   <SelectTrigger className="w-full h-16 bg-zinc-900/50 border-zinc-800 text-lg rounded-2xl px-4 focus:ring-green-500/20">
                     <SelectValue placeholder="Select roommate" />
                   </SelectTrigger>

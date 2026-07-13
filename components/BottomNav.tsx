@@ -21,46 +21,42 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 w-full max-w-[480px] bg-zinc-950/80 backdrop-blur-lg border-t border-zinc-900/60 pb-safe z-50">
-      <div className="flex justify-around items-center h-16">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[432px] bg-[#1a1a1c]/80 backdrop-blur-xl border border-[#2c2c2e]/60 shadow-xl rounded-full px-2 py-1.5 z-50 select-none">
+      <div className="flex justify-around items-center h-12">
         <Link
           href="/dashboard"
           className={cn(
-            "flex flex-col items-center justify-center w-full h-full text-zinc-500 hover:text-zinc-200 transition-colors",
-            pathname === "/dashboard" && "text-green-500 font-bold"
+            "flex flex-col items-center justify-center w-12 h-11 rounded-full text-zinc-500 hover:text-zinc-200 transition-all",
+            pathname === "/dashboard" && "text-white bg-white/5 border border-white/5"
           )}
         >
-          <Home className="h-5 w-5 mb-1" />
-          <span className="text-[9px] uppercase tracking-widest font-semibold">Dashboard</span>
+          <Home className="h-4.5 w-4.5" />
         </Link>
         <Link
           href="/expense/new"
           className={cn(
-            "flex flex-col items-center justify-center w-full h-full text-zinc-500 hover:text-zinc-200 transition-colors",
-            pathname === "/expense/new" && "text-green-500 font-bold"
+            "flex flex-col items-center justify-center w-12 h-11 rounded-full text-zinc-500 hover:text-zinc-200 transition-all",
+            pathname === "/expense/new" && "text-white bg-white/5 border border-white/5"
           )}
         >
-          <PlusCircle className="h-5 w-5 mb-1" />
-          <span className="text-[9px] uppercase tracking-widest font-semibold">Add</span>
+          <PlusCircle className="h-4.5 w-4.5" />
         </Link>
         <Link
           href="/activity"
           className={cn(
-            "flex flex-col items-center justify-center w-full h-full text-zinc-500 hover:text-zinc-200 transition-colors",
-            pathname === "/activity" && "text-green-500 font-bold"
+            "flex flex-col items-center justify-center w-12 h-11 rounded-full text-zinc-500 hover:text-zinc-200 transition-all",
+            pathname === "/activity" && "text-white bg-white/5 border border-white/5"
           )}
         >
-          <Activity className="h-5 w-5 mb-1" />
-          <span className="text-[9px] uppercase tracking-widest font-semibold">Activity</span>
+          <Activity className="h-4.5 w-4.5" />
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex flex-col items-center justify-center w-full h-full text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
+          className="flex flex-col items-center justify-center w-12 h-11 rounded-full text-zinc-500 hover:text-red-400 transition-all cursor-pointer"
         >
-          <LogOut className="h-5 w-5 mb-1" />
-          <span className="text-[9px] uppercase tracking-widest font-semibold">Log Out</span>
+          <LogOut className="h-4.5 w-4.5" />
         </button>
       </div>
-    </nav>
+    </div>
   );
 }

@@ -85,7 +85,7 @@ export default async function RoommatesPage() {
           </h2>
           <div className="space-y-3">
             {apartment.members.map((member) => {
-              const isPhantom = !["alice@example.com", "bob@example.com", "charlie@example.com"].includes(member.user.email);
+              const isPhantom = !member.user.email || !["alice@example.com", "bob@example.com", "charlie@example.com"].includes(member.user.email);
               return (
                 <div key={member.userId} className="flex items-center justify-between bg-zinc-900/40 p-3.5 rounded-xl border border-zinc-900">
                   <div className="flex items-center gap-4">
