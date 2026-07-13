@@ -119,10 +119,6 @@ export default async function ActivityPage() {
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="relative h-11 w-11 bg-zinc-900 border border-zinc-850 rounded-xl flex items-center justify-center shrink-0">
               <IconComp className="h-5 w-5 text-zinc-400" />
-              {/* Overlay layout metadata matching Mock 1 */}
-              <span className="absolute -bottom-1.5 -left-1 text-[7px] font-black text-zinc-550 truncate max-w-[50px] uppercase tracking-wider">
-                {iconInfo.label}
-              </span>
             </div>
             <div className="min-w-0">
               <p className="font-extrabold text-zinc-150 text-sm leading-tight truncate">{expense.description}</p>
@@ -155,9 +151,6 @@ export default async function ActivityPage() {
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="relative h-11 w-11 bg-zinc-900 border border-zinc-850 rounded-xl flex items-center justify-center shrink-0">
               <IconComp className="h-5 w-5 text-zinc-400" />
-              <span className="absolute -bottom-1.5 -left-1 text-[7px] font-black text-zinc-550 truncate max-w-[50px] uppercase tracking-wider">
-                {iconInfo.label}
-              </span>
             </div>
             <div className="min-w-0">
               <p className="font-extrabold text-zinc-150 text-sm leading-tight truncate">Settle Up Payment</p>
