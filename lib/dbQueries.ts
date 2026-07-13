@@ -109,5 +109,6 @@ export async function getDashboardData(userId: string) {
     peerBalances,
     recentActivity,
     users,
+    simplifiedDebts: debts,
   };
 }

@@ -12,6 +12,7 @@ import { lazyTriggerRecurringExpenses, lazyTriggerMonthlySummaryEmail } from "@/
 import { NudgeButton } from "@/components/NudgeButton";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { MonthlySummaryCard } from "@/components/MonthlySummaryCard";
+import { SimplifiedDebtsCard } from "@/components/SimplifiedDebtsCard";
 
 // Format cents to dollars
 const formatCurrency = (cents: number) => {
@@ -38,7 +39,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
 
   const currentUserId = (session.user as any).id || "u1";
 
-  const { netBalance, peerBalances, recentActivity, users } = await getDashboardData(currentUserId);
+  const { netBalance, peerBalances, recentActivity, users, simplifiedDebts } = await getDashboardData(currentUserId);
 
   // Serialize recent activity and users to avoid client-side date transfer errors
   const serializedRecentActivity = recentActivity.map(act => ({
@@ -55,6 +56,12 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
     id: u.id,
     name: u.name,
     email: u.email,
+  }));
+
+  const serializedSimplifiedDebts = simplifiedDebts.map(d => ({
+    debtor: d.debtor,
+    creditor: d.creditor,
+    amount: d.amount,
   }));
 
   return (
@@ -184,6 +191,11 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
                 </CardContent>
               </Link>
             </Card>
+
+            <SimplifiedDebtsCard 
+              simplifiedDebts={serializedSimplifiedDebts} 
+              users={serializedUsers} 
+            />
           </div>
         </div>
 
