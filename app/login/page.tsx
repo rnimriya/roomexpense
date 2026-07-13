@@ -42,10 +42,10 @@ export default function LoginPage() {
     <div className="flex flex-col min-h-screen bg-[#0c0e0e] text-zinc-50 relative overflow-hidden px-6 pb-8 pt-10 justify-between">
       {/* Brand Logo - Mock 4 */}
       <div className="text-center pt-4">
-        <span className="text-xl font-black tracking-[0.25em] text-[#82d0ad] uppercase">
+        <span className="text-xl font-black tracking-[0.25em] text-[#3a8469] uppercase">
           FAIRSHARE
         </span>
-        <div className="h-0.5 w-10 bg-[#82d0ad] mx-auto mt-1.5 rounded-full" />
+        <div className="h-0.5 w-10 bg-[#3a8469] mx-auto mt-1.5 rounded-full" />
       </div>
 
       <div className="max-w-sm mx-auto w-full bg-[#181a1b] border border-zinc-900 rounded-[24px] p-6.5 my-auto shadow-2xl">
@@ -143,7 +143,7 @@ export default function LoginPage() {
               <button 
                 type="button" 
                 onClick={() => toast.info("Password recovery is disabled for MVP.")}
-                className="text-[10px] font-bold text-[#82d0ad] hover:underline"
+                className="text-[10px] font-bold text-[#3a8469] hover:underline"
               >
                 Forgot?
               </button>
@@ -164,7 +164,7 @@ export default function LoginPage() {
           <Button 
             type="submit"
             disabled={loading || (!email || !password || (isSignUp && !name))}
-            className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-bold rounded-xl mt-6 cursor-pointer flex items-center justify-center transition-all active:scale-98"
+            className="w-full h-13 bg-[#3a8469] text-zinc-950 hover:bg-[#2f6c56] text-sm font-bold rounded-xl mt-6 cursor-pointer flex items-center justify-center transition-all active:scale-98"
           >
             {loading ? "Verifying..." : (isSignUp ? "Sign Up" : "Sign In")}
           </Button>

@@ -116,14 +116,14 @@ export default function SettleUpPage() {
           </div>
         ) : peopleYouOwe.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[70vh] text-center max-w-xs mx-auto">
-            <div className="h-16 w-16 bg-[#82d0ad]/10 rounded-full flex items-center justify-center mb-6">
-              <Check className="h-8 w-8 text-[#82d0ad]" />
+            <div className="h-16 w-16 bg-[#3a8469]/10 rounded-full flex items-center justify-center mb-6">
+              <Check className="h-8 w-8 text-[#3a8469]" />
             </div>
             <h2 className="text-xl font-black text-white mb-2">You're all settled!</h2>
             <p className="text-xs text-zinc-500 leading-relaxed">You don't owe anyone right now.</p>
             <Button 
               onClick={() => router.push("/dashboard")}
-              className="mt-8 h-13 px-8 bg-[#82d0ad] text-zinc-950 font-black rounded-xl w-full"
+              className="mt-8 h-13 px-8 bg-[#3a8469] text-zinc-950 font-black rounded-xl w-full"
             >
               Go to Dashboard
             </Button>
@@ -134,7 +134,7 @@ export default function SettleUpPage() {
               <div>
                 <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] block mb-3">WHO DID YOU PAY?</label>
                 <Select value={payeeId} onValueChange={(val) => setPayeeId(val || "")}>
-                  <SelectTrigger className="w-full h-14 bg-[#1e2021] border-zinc-900 text-sm rounded-xl px-4 focus:ring-[#82d0ad]/20 text-zinc-200">
+                  <SelectTrigger className="w-full h-14 bg-[#1e2021] border-zinc-900 text-sm rounded-xl px-4 focus:ring-[#3a8469]/20 text-zinc-200">
                     <SelectValue placeholder="Select roommate" />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
@@ -158,7 +158,7 @@ export default function SettleUpPage() {
                     value={amountStr}
                     onChange={(e) => setAmountStr(e.target.value)}
                     placeholder="0.00"
-                    className="w-full h-14 bg-[#1e2021] border-zinc-900 text-lg font-bold rounded-xl pl-11 focus-visible:ring-[#82d0ad]/50 text-zinc-200"
+                    className="w-full h-14 bg-[#1e2021] border-zinc-900 text-lg font-bold rounded-xl pl-11 focus-visible:ring-[#3a8469]/50 text-zinc-200"
                   />
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function SettleUpPage() {
                   <button
                     type="button"
                     onClick={() => setRazorpayOpen(true)}
-                    className="w-full h-12 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] font-black rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-xs cursor-pointer shadow-[0_0_20px_-5px_rgba(130,208,173,0.3)]"
+                    className="w-full h-12 bg-[#3a8469] text-zinc-950 hover:bg-[#2f6c56] font-black rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-xs cursor-pointer shadow-[0_0_20px_-5px_rgba(130,208,173,0.3)]"
                   >
                     <CreditCard className="h-4.5 w-4.5" /> Pay with Razorpay (UPI / Card)
                   </button>
@@ -205,7 +205,7 @@ export default function SettleUpPage() {
             <Button 
               type="submit"
               disabled={!payeeId || !amountStr || parseFloat(amountStr) <= 0 || loading}
-              className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-black rounded-xl mt-auto shrink-0 cursor-pointer active:scale-98"
+              className="w-full h-13 bg-[#3a8469] text-zinc-950 hover:bg-[#2f6c56] text-sm font-black rounded-xl mt-auto shrink-0 cursor-pointer active:scale-98"
             >
               {loading ? "Recording..." : "Record Manual Cash Payment"}
             </Button>

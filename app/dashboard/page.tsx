@@ -69,13 +69,13 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
       {/* Brand Navigation Bar - Mock 3 */}
       <div className="pt-8 pb-4 px-6 flex justify-between items-center border-b border-zinc-900 bg-[#0c0e0e]/80 backdrop-blur-md z-40 shrink-0">
         <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 border border-[#82d0ad]/20">
-            <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-bold text-xs">
+          <Avatar className="h-8 w-8 border border-[#3a8469]/20">
+            <AvatarFallback className="bg-zinc-900 text-[#3a8469] font-bold text-xs">
               {session.user.name?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
           <h1 className="text-base font-black tracking-wide text-white">
-            <span className="text-[#82d0ad]">Roomie</span>Pay
+            <span className="text-[#3a8469]">Roomie</span>Pay
           </h1>
         </div>
         <NotificationsBell 
@@ -116,12 +116,12 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
                 TOTAL BALANCE
               </p>
               <h1 className={`text-4.5xl font-black tracking-tight ${
-                netBalance >= 0 ? 'text-[#82d0ad]' : 'text-red-500'
+                netBalance >= 0 ? 'text-[#3a8469]' : 'text-red-500'
               }`}>
                 {netBalance < 0 ? '-' : ''}{formatCurrency(netBalance)}
               </h1>
               <p className="text-[10px] text-zinc-400 font-semibold mt-1 flex items-center gap-1.5">
-                <TrendingUp className="h-3.5 w-3.5 text-[#82d0ad]" /> Up 12% from last month
+                <TrendingUp className="h-3.5 w-3.5 text-[#3a8469]" /> Up 12% from last month
               </p>
             </div>
 
@@ -129,7 +129,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
             <div className="flex gap-3 relative z-10">
               <Link 
                 href="/settle"
-                className="flex-1 h-11 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all"
+                className="flex-1 h-11 bg-[#3a8469] text-zinc-950 hover:bg-[#2f6c56] rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all"
               >
                 <Send className="h-3.5 w-3.5" /> Send
               </Link>
@@ -171,7 +171,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3.5 text-left">
                       <Avatar className="h-10 w-10 border border-zinc-800">
-                        <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-bold text-xs">
+                        <AvatarFallback className="bg-zinc-900 text-[#3a8469] font-bold text-xs">
                           {peerUser?.name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
@@ -186,7 +186,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
                     <div className="flex items-center gap-2">
                       <Link 
                         href="/settle"
-                        className="bg-[#82d0ad]/10 hover:bg-[#82d0ad]/20 text-[#82d0ad] text-[10px] font-black uppercase tracking-wider px-3.5 py-2 rounded-lg transition-all"
+                        className="bg-[#3a8469]/10 hover:bg-[#3a8469]/20 text-[#3a8469] text-[10px] font-black uppercase tracking-wider px-3.5 py-2 rounded-lg transition-all"
                       >
                         SETTLE
                       </Link>
@@ -202,7 +202,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3.5 text-left">
                     <div className="h-10 w-10 rounded-full border border-dashed border-zinc-800 flex items-center justify-center text-zinc-400">
-                      <Plus className="h-4 w-4 text-[#82d0ad]" />
+                      <Plus className="h-4 w-4 text-[#3a8469]" />
                     </div>
                     <div>
                       <p className="font-bold text-zinc-350 text-sm">Add or Invite Roommates</p>
@@ -254,7 +254,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
                   <div key={idx} className="flex items-center justify-between p-2">
                     <div className="flex items-center gap-3.5 text-left">
                       <div className="h-10 w-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                        <ArrowUpRight className="h-4 w-4 text-[#82d0ad]" />
+                        <ArrowUpRight className="h-4 w-4 text-[#3a8469]" />
                       </div>
                       <div>
                         <p className="font-bold text-zinc-200 text-sm">Payment</p>
@@ -275,7 +275,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
       {/* Floating Add Capsule FAB - Mock 3 */}
       <Link 
         href="/expense/new"
-        className="fixed bottom-22 right-5 z-40 bg-[#82d0ad] text-zinc-950 shadow-xl px-4.5 py-2.5 rounded-full flex items-center justify-center gap-1 font-black text-[10px] tracking-wider uppercase active:scale-95 transition-all select-none border border-zinc-900/50 hover:bg-[#71bda0]"
+        className="fixed bottom-22 right-5 z-40 bg-[#3a8469] text-zinc-950 shadow-xl px-4.5 py-2.5 rounded-full flex items-center justify-center gap-1 font-black text-[10px] tracking-wider uppercase active:scale-95 transition-all select-none border border-zinc-900/50 hover:bg-[#2f6c56]"
       >
         <Plus className="h-3.5 w-3.5 stroke-[3]" /> Add
       </Link>

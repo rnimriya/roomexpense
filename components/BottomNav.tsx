@@ -41,14 +41,14 @@ export function BottomNav() {
               <div className={cn(
                 "h-7 w-14 rounded-full flex items-center justify-center transition-all duration-250",
                 isActive 
-                  ? "bg-[#82d0ad] text-zinc-950" 
+                  ? "bg-[#3a8469] text-zinc-950" 
                   : "text-zinc-500 group-hover:text-zinc-350"
               )}>
                 <Icon className="h-4.5 w-4.5" />
               </div>
               <span className={cn(
                 "text-[9px] font-bold uppercase tracking-wider mt-1.5",
-                isActive ? "text-[#82d0ad]" : "text-zinc-550"
+                isActive ? "text-[#3a8469]" : "text-zinc-550"
               )}>
                 {item.label}
               </span>

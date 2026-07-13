@@ -130,8 +130,8 @@ export default function AddExpensePage() {
         <span className="font-extrabold text-white text-base tracking-wide">
           {step === 1 ? "Add Expense" : `Step ${step} of 3`}
         </span>
-        <Avatar className="h-8 w-8 border border-[#82d0ad]/20">
-          <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-bold text-xs">
+        <Avatar className="h-8 w-8 border border-[#3a8469]/20">
+          <AvatarFallback className="bg-zinc-900 text-[#3a8469] font-bold text-xs">
             U
           </AvatarFallback>
         </Avatar>
@@ -144,7 +144,7 @@ export default function AddExpensePage() {
             <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px]">
               ENTER AMOUNT
             </p>
-            <div className="flex items-baseline justify-center text-[#82d0ad] relative">
+            <div className="flex items-baseline justify-center text-[#3a8469] relative">
               <span className="text-3xl font-black mr-1.5 select-none">$</span>
               <span className="text-6.5xl font-black tracking-tight leading-none">
                 {formattedAmount}
@@ -158,8 +158,8 @@ export default function AddExpensePage() {
               disabled={scanning}
               className="px-6 py-3 bg-[#1e2021] border border-zinc-900 hover:bg-zinc-850 hover:border-zinc-800 text-zinc-300 rounded-xl flex items-center justify-center gap-2 mb-4 active:scale-95 transition-all text-xs font-extrabold cursor-pointer disabled:opacity-50"
             >
-              <Receipt className="h-4.5 w-4.5 text-[#82d0ad]" />
-              <span className="text-[#82d0ad] tracking-wide">
+              <Receipt className="h-4.5 w-4.5 text-[#3a8469]" />
+              <span className="text-[#3a8469] tracking-wide">
                 {scanning ? "Parsing receipt text..." : "Scan Receipt with OCR"}
               </span>
             </button>
@@ -204,7 +204,7 @@ export default function AddExpensePage() {
             <Button 
               onClick={() => setStep(2)} 
               disabled={amountCents === 0}
-              className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-black rounded-xl cursor-pointer active:scale-98"
+              className="w-full h-13 bg-[#3a8469] text-zinc-950 hover:bg-[#2f6c56] text-sm font-black rounded-xl cursor-pointer active:scale-98"
             >
               Continue
             </Button>
@@ -234,7 +234,7 @@ export default function AddExpensePage() {
                 onClick={handleAttachMockReceipt}
                 className={`w-full p-4 rounded-xl border border-dashed flex items-center justify-center gap-2 text-xs font-bold transition-all ${
                   receiptUrl 
-                    ? 'border-[#82d0ad]/50 bg-[#82d0ad]/5 text-[#82d0ad]' 
+                    ? 'border-[#3a8469]/50 bg-[#3a8469]/5 text-[#3a8469]' 
                     : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/30 text-zinc-400 hover:text-zinc-300'
                 }`}
               >
@@ -256,7 +256,7 @@ export default function AddExpensePage() {
                 id="isRecurring"
                 checked={isRecurring}
                 onChange={(e) => setIsRecurring(e.target.checked)}
-                className="h-5 w-5 rounded border-zinc-800 bg-zinc-900 text-[#82d0ad] focus:ring-[#82d0ad]/20"
+                className="h-5 w-5 rounded border-zinc-800 bg-zinc-900 text-[#3a8469] focus:ring-[#3a8469]/20"
               />
               <label htmlFor="isRecurring" className="text-xs font-bold text-zinc-300 cursor-pointer">
                 Repeat this expense monthly (Rent/Internet)
@@ -267,7 +267,7 @@ export default function AddExpensePage() {
           <Button 
             onClick={() => setStep(3)} 
             disabled={description.trim() === ""}
-            className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-black rounded-xl mt-auto cursor-pointer active:scale-98"
+            className="w-full h-13 bg-[#3a8469] text-zinc-950 hover:bg-[#2f6c56] text-sm font-black rounded-xl mt-auto cursor-pointer active:scale-98"
           >
             Continue
           </Button>
@@ -294,18 +294,18 @@ export default function AddExpensePage() {
                   }}
                   className={`p-4 rounded-xl border cursor-pointer transition-all ${
                     splitType === type.id && !selectedTemplateId
-                      ? 'border-[#82d0ad] bg-[#82d0ad]/5' 
+                      ? 'border-[#3a8469] bg-[#3a8469]/5' 
                       : 'border-zinc-900 bg-[#181a1b] hover:border-zinc-800'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className={`font-bold text-sm ${splitType === type.id && !selectedTemplateId ? 'text-[#82d0ad]' : 'text-zinc-100'}`}>
+                      <h3 className={`font-bold text-sm ${splitType === type.id && !selectedTemplateId ? 'text-[#3a8469]' : 'text-zinc-100'}`}>
                         {type.label}
                       </h3>
                       <p className="text-[10px] text-zinc-500 mt-0.5">{type.desc}</p>
                     </div>
-                    {splitType === type.id && !selectedTemplateId && <Check className="h-4 w-4 text-[#82d0ad]" />}
+                    {splitType === type.id && !selectedTemplateId && <Check className="h-4 w-4 text-[#3a8469]" />}
                   </div>
                 </div>
               ))}
@@ -325,20 +325,20 @@ export default function AddExpensePage() {
                       }}
                       className={`p-4 rounded-xl border cursor-pointer transition-all ${
                         selectedTemplateId === template.id
-                          ? 'border-[#82d0ad] bg-[#82d0ad]/5' 
+                          ? 'border-[#3a8469] bg-[#3a8469]/5' 
                           : 'border-zinc-900 bg-[#181a1b] hover:border-zinc-800'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className={`font-bold text-sm ${selectedTemplateId === template.id ? 'text-[#82d0ad]' : 'text-zinc-100'}`}>
+                          <h3 className={`font-bold text-sm ${selectedTemplateId === template.id ? 'text-[#3a8469]' : 'text-zinc-100'}`}>
                             {template.name}
                           </h3>
                           <p className="text-[10px] text-zinc-500 mt-0.5">
                             Saved percentage ratio for rent splitting.
                           </p>
                         </div>
-                        {selectedTemplateId === template.id && <Check className="h-4 w-4 text-[#82d0ad]" />}
+                        {selectedTemplateId === template.id && <Check className="h-4 w-4 text-[#3a8469]" />}
                       </div>
                     </div>
                   ))}
@@ -357,7 +357,7 @@ export default function AddExpensePage() {
           <Button 
             onClick={handleSubmit} 
             disabled={loading}
-            className="w-full h-13 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] text-sm font-black rounded-xl mt-6 shrink-0 cursor-pointer active:scale-98"
+            className="w-full h-13 bg-[#3a8469] text-zinc-950 hover:bg-[#2f6c56] text-sm font-black rounded-xl mt-6 shrink-0 cursor-pointer active:scale-98"
           >
             {loading ? "Adding..." : "Add Expense"}
           </Button>
