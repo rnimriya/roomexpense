@@ -74,6 +74,7 @@ model Apartment {
   name            String
   inviteLinkToken String   @unique @default(cuid())
   plan            String   @default("FREE")
+  lastSummarySent DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

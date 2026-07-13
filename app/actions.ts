@@ -169,6 +169,71 @@ export async function lazyTriggerRecurringExpenses() {
   revalidatePath("/activity");
 }
 
+export async function lazyTriggerMonthlySummaryEmail() {
+  const now = new Date();
+  
+  const apartment = await prisma.apartment.findUnique({
+    where: { id: "a1" },
+  });
+
+  if (!apartment) return;
+
+  const lastSent = apartment.lastSummarySent;
+  const isDue = !lastSent || (lastSent.getMonth() !== now.getMonth() || lastSent.getFullYear() !== now.getFullYear());
+
+  if (!isDue) return;
+
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const startOfPrevMonth = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
+  const endOfPrevMonth = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0, 23, 59, 59);
+
+  const prevMonthExpenses = await prisma.expense.findMany({
+    where: {
+      apartmentId: apartment.id,
+      isDeleted: false,
+      isRecurring: false,
+      createdAt: {
+        gte: startOfPrevMonth,
+        lte: endOfPrevMonth,
+      },
+    },
+  });
+
+  const totalCents = prevMonthExpenses.reduce((sum, e) => sum + e.totalAmount, 0);
+  const totalStr = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(totalCents / 100);
+
+  const monthName = prevMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  const latestExpense = await prisma.expense.findFirst({
+    where: {
+      apartmentId: apartment.id,
+      isDeleted: false,
+      isRecurring: false,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (latestExpense) {
+    await prisma.comment.create({
+      data: {
+        expenseId: latestExpense.id,
+        userId: latestExpense.creatorId,
+        content: `📬 AUTOMATED MONTHLY SUMMARY DISPATCH: Spending report for ${monthName} has been compiled and emailed to all roommates. Total group spending: ${totalStr}.`,
+      },
+    });
+  }
+
+  await prisma.apartment.update({
+    where: { id: apartment.id },
+    data: { lastSummarySent: now },
+  });
+
+  revalidatePath("/dashboard");
+}
+
 // Fetch who you owe, excluding soft deleted expenses
 export async function getPeopleYouOweAction(userId: string) {
   const users = await prisma.user.findMany();

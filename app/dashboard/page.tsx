@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 import { ArrowUpRight, ArrowDownLeft, Plus } from "lucide-react";
-import { lazyTriggerRecurringExpenses } from "@/app/actions";
+import { lazyTriggerRecurringExpenses, lazyTriggerMonthlySummaryEmail } from "@/app/actions";
 import { NudgeButton } from "@/components/NudgeButton";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { MonthlySummaryCard } from "@/components/MonthlySummaryCard";
@@ -28,11 +28,12 @@ export default async function DashboardPage(props: { searchParams: Promise<{ err
   const searchParams = await props.searchParams;
   const isPaywallError = searchParams?.error && searchParams.error.includes("PAYWALL");
 
-  // Run lazy-cron recurring expenses check
+  // Run lazy-cron checks
   try {
     await lazyTriggerRecurringExpenses();
+    await lazyTriggerMonthlySummaryEmail();
   } catch (err) {
-    console.error("Failed to run recurring expenses cron", err);
+    console.error("Failed to run lazy cron checks", err);
   }
 
   const currentUserId = (session.user as any).id || "u1";
