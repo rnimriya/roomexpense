@@ -33,7 +33,10 @@ export default async function ProfilePage() {
       {/* Header - Mock 3 style */}
       <div className="pt-8 pb-4 px-6 flex justify-between items-center border-b border-zinc-900 bg-[#0c0e0e]/80 backdrop-blur-md z-40 shrink-0">
         <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 border border-[#82d0ad]/20">
+          <Avatar className="h-8 w-8 border border-[#82d0ad]/20 overflow-hidden relative shrink-0">
+            {user?.image && (
+              <img src={user.image} alt={session.user.name || "User"} className="h-full w-full object-cover rounded-full" />
+            )}
             <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-bold text-xs">
               {session.user.name?.charAt(0) || "U"}
             </AvatarFallback>
@@ -53,7 +56,10 @@ export default async function ProfilePage() {
           {/* User Profile Info Card */}
           <div className="bg-[#181a1b] border border-zinc-900 rounded-[28px] p-6 relative overflow-hidden shadow-xl">
             <div className="flex items-center gap-4 relative z-10">
-              <Avatar className="h-16 w-16 border-2 border-[#82d0ad]/30">
+              <Avatar className="h-16 w-16 border-2 border-[#82d0ad]/30 overflow-hidden relative shrink-0">
+                {user?.image && (
+                  <img src={user.image} alt={session.user.name || "User"} className="h-full w-full object-cover rounded-full" />
+                )}
                 <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-extrabold text-lg">
                   {session.user.name?.charAt(0) || "U"}
                 </AvatarFallback>

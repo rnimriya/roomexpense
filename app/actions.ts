@@ -410,7 +410,7 @@ export async function createSplitTemplateAction(data: {
   });
 }
 
-export async function addRoommateAction(data: { name: string; email: string }) {
+export async function addRoommateAction(data: { name: string; email: string; imageUrl?: string }) {
   if (!data.name || !data.email) throw new Error("Name and Email are required");
 
   const apartment = await prisma.apartment.findUnique({
@@ -442,6 +442,7 @@ export async function addRoommateAction(data: { name: string; email: string }) {
         name: data.name,
         email: data.email,
         password: hashedPassword,
+        image: data.imageUrl || null,
       },
     });
   }
@@ -650,6 +651,16 @@ export async function removeRoommateAction(apartmentId: string, userIdToRemove: 
     },
   });
 
+  revalidatePath("/roommates");
+  revalidatePath("/dashboard");
+}
+
+export async function updateRoommatePhotoAction(userId: string, imageUrl: string) {
+  if (!userId) throw new Error("User ID is required");
+  await prisma.user.update({
+    where: { id: userId },
+    data: { image: imageUrl },
+  });
   revalidatePath("/roommates");
   revalidatePath("/dashboard");
 }
