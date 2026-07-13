@@ -50,7 +50,7 @@ export function MonthlySummaryCard({ activities, currentUserId, users }: { activ
       <div className="grid grid-cols-2 gap-3.5">
         {/* Spending Card - Mock 3 */}
         <div className="bg-[#181a1b] border border-zinc-900 p-4.5 rounded-2xl flex flex-col justify-between h-32 text-left">
-          <div className="flex items-center gap-1.5 text-[#3a8469] text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-1.5 text-[#82d0ad] text-xs font-bold uppercase tracking-wider">
             <Receipt className="h-4.5 w-4.5" /> Spending
           </div>
           <div>

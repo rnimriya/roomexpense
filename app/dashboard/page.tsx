@@ -1,18 +1,13 @@
-import { getDashboardData } from "@/lib/dbQueries";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import Link from "next/link";
-import { ArrowUpRight, ArrowDownLeft, Plus, Send, TrendingUp } from "lucide-react";
-import { lazyTriggerRecurringExpenses, lazyTriggerMonthlySummaryEmail } from "@/app/actions";
-import { NudgeButton } from "@/components/NudgeButton";
-import { NotificationsBell } from "@/components/NotificationsBell";
 import { MonthlySummaryCard } from "@/components/MonthlySummaryCard";
-import { SimplifiedDebtsCard } from "@/components/SimplifiedDebtsCard";
+import { Plus, ArrowUpRight, ArrowDownLeft, Receipt, UserPlus, TrendingUp, Bell } from "lucide-react";
 
 // Format cents to dollars
 const formatCurrency = (cents: number) => {
@@ -22,262 +17,266 @@ const formatCurrency = (cents: number) => {
   }).format(Math.abs(cents) / 100);
 };
 
-export default async function DashboardPage(props: { searchParams: Promise<{ error?: string }> }) {
+export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) redirect("/login");
 
-  const searchParams = await props.searchParams;
-  const isPaywallError = searchParams?.error && searchParams.error.includes("PAYWALL");
-
-  // Run lazy-cron checks
-  try {
-    await lazyTriggerRecurringExpenses();
-    await lazyTriggerMonthlySummaryEmail();
-  } catch (err) {
-    console.error("Failed to run lazy cron checks", err);
-  }
-
   const currentUserId = (session.user as any).id || "u1";
 
-  const { netBalance, peerBalances, recentActivity, users, simplifiedDebts } = await getDashboardData(currentUserId);
+  // Load user with apartment members
+  const userWithApartments = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    include: {
+      apartmentMembers: {
+        include: {
+          apartment: {
+            include: {
+              members: {
+                include: {
+                  user: true,
+                },
+              },
+              expenses: {
+                where: { isDeleted: false },
+                include: {
+                  creator: true,
+                  participants: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
 
-  // Serialize recent activity and users to avoid client-side date transfer errors
-  const serializedRecentActivity = recentActivity.map(act => ({
-    ...act,
-    date: act.date.toISOString(),
-    data: {
-      ...act.data,
-      createdAt: act.data.createdAt.toISOString(),
-      updatedAt: act.data.updatedAt.toISOString(),
-    }
-  }));
+  const memberInfo = userWithApartments?.apartmentMembers?.[0];
+  const apartment = memberInfo?.apartment;
 
-  const serializedUsers = users.map(u => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-  }));
+  if (!apartment) {
+    redirect("/apartment/new");
+  }
 
-  const serializedSimplifiedDebts = simplifiedDebts.map(d => ({
-    debtor: d.debtor,
-    creditor: d.creditor,
-    amount: d.amount,
-  }));
+  // Calculate balances
+  const users = apartment.members.map((m) => m.user);
+  const activeExpenses = apartment.expenses;
+
+  // Track debt matrices
+  let balances: { [userId: string]: number } = {};
+  users.forEach((u) => {
+    balances[u.id] = 0;
+  });
+
+  activeExpenses.forEach((exp) => {
+    const creatorId = exp.creatorId;
+    const participants = exp.participants;
+    
+    participants.forEach((part) => {
+      const debtorId = part.userId;
+      const owed = part.amountOwed;
+      
+      if (debtorId === creatorId) {
+        // Creator paid and owes their share
+        balances[creatorId] -= (exp.totalAmount - owed);
+      } else {
+        // Debtor owes money to creator
+        balances[debtorId] += owed;
+        balances[creatorId] -= owed;
+      }
+    });
+  });
+
+  const netBalance = -(balances[currentUserId] || 0);
+
+  // Find who owes what
+  const roomiesToOwe = users
+    .filter((u) => u.id !== currentUserId)
+    .map((u) => {
+      const uBalance = balances[u.id] || 0;
+      const myBalance = balances[currentUserId] || 0;
+      
+      // Calculate split diff
+      let share = 0;
+      if (uBalance > 0 && myBalance < 0) {
+        share = Math.min(Math.abs(myBalance), uBalance);
+      } else if (uBalance < 0 && myBalance > 0) {
+        share = -Math.min(myBalance, Math.abs(uBalance));
+      }
+      return { user: u, share };
+    })
+    .filter((r) => Math.abs(r.share) > 0);
 
   return (
-    <div className="flex flex-col h-full bg-[#0c0e0e] text-zinc-50 relative">
-      {/* Brand Navigation Bar - Mock 3 */}
+    <div className="flex flex-col h-full bg-[#0c0e0e] text-zinc-50 relative pb-24">
+      {/* Header - Mock 3 */}
       <div className="pt-8 pb-4 px-6 flex justify-between items-center border-b border-zinc-900 bg-[#0c0e0e]/80 backdrop-blur-md z-40 shrink-0">
         <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 border border-[#3a8469]/20">
-            <AvatarFallback className="bg-zinc-900 text-[#3a8469] font-bold text-xs">
+          <Avatar className="h-8 w-8 border border-[#82d0ad]/20">
+            <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-bold text-xs">
               {session.user.name?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
           <h1 className="text-base font-black tracking-wide text-white">
-            <span className="text-[#3a8469]">Roomie</span>Pay
+            <span className="text-[#82d0ad]">Roomie</span>Pay
           </h1>
         </div>
-        <NotificationsBell 
-          activities={serializedRecentActivity} 
-          currentUserId={currentUserId}
-          users={serializedUsers}
-        />
+        <button className="text-[10px] font-bold text-zinc-400 hover:text-zinc-200 tracking-wider flex items-center gap-1">
+          <Bell className="h-4 w-4" />
+        </button>
       </div>
 
       <ScrollArea className="flex-1">
-        {/* Marketing SaaS paywall block alert */}
-        {isPaywallError && (
-          <div className="mx-6 mt-4 p-4.5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold text-red-500 uppercase tracking-widest">Upgrade Required</p>
-              <p className="text-[10px] text-zinc-455 leading-relaxed mt-1">
-                A roommate tried to join your group via invite link but was blocked. Free apartments are limited to 2 roommates.
-              </p>
-            </div>
-            <Link 
-              href="/roommates" 
-              className="text-[10px] font-bold text-white bg-[#0584eb] hover:bg-[#2094f0] px-4 py-2 rounded-full uppercase tracking-wider shrink-0 transition-colors shadow-[0_0_15px_-3px_rgba(5,132,235,0.4)]"
-            >
-              Upgrade Now
-            </Link>
-          </div>
-        )}
+        <div className="px-6 py-6 space-y-6 text-left">
+          {/* Dashboard Balance Container - Mock 3 */}
+          <div className="bg-[#181a1b] border border-zinc-900 rounded-[28px] p-6 relative overflow-hidden shadow-xl">
+            <div className="flex flex-col space-y-5 relative z-10">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.25em] mb-1.5">
+                    TOTAL BALANCE
+                  </p>
+                  <h2 className="text-3.5xl font-black text-[#82d0ad] tracking-tight leading-none">
+                    {formatCurrency(netBalance)}
+                  </h2>
+                </div>
+                <div className={`flex items-center gap-1 text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                  netBalance >= 0 ? 'bg-[#82d0ad]/10 text-[#82d0ad]' : 'bg-red-500/10 text-red-400'
+                }`}>
+                  <TrendingUp className={`h-3.5 w-3.5 ${netBalance >= 0 ? 'text-[#82d0ad]' : 'text-red-400'}`} /> Up 12% from last month
+                </div>
+              </div>
 
-        {/* Balance Wallet Card - Mock 3 */}
-        <div className="pt-6 px-6 pb-2">
-          <div className="bg-[#181a1b] border border-zinc-900 rounded-[28px] p-6 relative overflow-hidden shadow-xl shadow-black/45">
-            {/* Shimmer overlay */}
-            <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -left-16 -bottom-16 w-48 h-48 bg-green-500/5 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="mb-6 relative z-10 text-left">
-              <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-1">
-                TOTAL BALANCE
-              </p>
-              <h1 className={`text-4.5xl font-black tracking-tight ${
-                netBalance >= 0 ? 'text-[#3a8469]' : 'text-red-500'
-              }`}>
-                {netBalance < 0 ? '-' : ''}{formatCurrency(netBalance)}
-              </h1>
-              <p className="text-[10px] text-zinc-400 font-semibold mt-1 flex items-center gap-1.5">
-                <TrendingUp className="h-3.5 w-3.5 text-[#3a8469]" /> Up 12% from last month
-              </p>
-            </div>
-
-            {/* Quick Action Button Actions inside card - Mock 3 */}
-            <div className="flex gap-3 relative z-10">
-              <Link 
-                href="/settle"
-                className="flex-1 h-11 bg-[#3a8469] text-zinc-950 hover:bg-[#2f6c56] rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all"
-              >
-                <Send className="h-3.5 w-3.5" /> Send
-              </Link>
-              <Link 
-                href="/expense/new"
-                className="flex-1 h-11 bg-[#242627] hover:bg-[#2c2f30] border border-zinc-900 text-zinc-200 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all"
-              >
-                <Plus className="h-3.5 w-3.5 text-zinc-400" /> Expense
-              </Link>
+              {/* Action capsule links - Mock 3 */}
+              <div className="flex gap-3 pt-2">
+                <Link
+                  href="/settle"
+                  className="flex-1 h-11 bg-[#82d0ad] text-zinc-950 hover:bg-[#71bda0] rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all"
+                >
+                  <ArrowDownLeft className="h-4 w-4" /> Settle
+                </Link>
+                <Link
+                  href="/expense/new"
+                  className="flex-1 h-11 bg-zinc-900 hover:bg-zinc-850 border border-zinc-850 rounded-xl flex items-center justify-center gap-1.5 text-zinc-200 text-xs font-bold transition-all"
+                >
+                  <ArrowUpRight className="h-4 w-4" /> Expense
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
 
-        <Separator className="bg-zinc-900/50 my-2" />
-
-        {/* Monthly Summary Banner - Mock 3 */}
-        <div className="pt-4">
-          <MonthlySummaryCard 
-            activities={serializedRecentActivity} 
-            currentUserId={currentUserId} 
-            users={serializedUsers} 
+          {/* Monthly summary statistics */}
+          <MonthlySummaryCard
+            activities={activeExpenses}
+            currentUserId={currentUserId}
+            users={users}
           />
-        </div>
 
-        {/* Roommates List Section - Mock 3 */}
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-zinc-100 tracking-tight">Roommates</h2>
-            <Link href="/roommates" className="text-[10px] font-bold text-zinc-450 hover:text-zinc-200 transition-colors uppercase tracking-widest bg-zinc-900 border border-zinc-850 px-3.5 py-1.5 rounded-lg active:scale-95 transition-transform">
-              Manage
-            </Link>
-          </div>
-          
-          <div className="space-y-3.5">
-            {peerBalances.filter(pb => pb.amount !== 0).map(pb => {
-              const peerUser = users.find(u => u.id === pb.userId);
-              return (
-                <Card key={pb.userId} className="bg-[#181a1b] border-zinc-900 rounded-[20px] overflow-hidden hover:bg-[#1f2122] transition-colors duration-250">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3.5 text-left">
-                      <Avatar className="h-10 w-10 border border-zinc-800">
-                        <AvatarFallback className="bg-zinc-900 text-[#3a8469] font-bold text-xs">
-                          {peerUser?.name?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-bold text-zinc-150 text-sm leading-tight">{peerUser?.name}</p>
-                        <p className="text-[10px] text-zinc-450 font-medium mt-0.5">
-                          {pb.amount > 0 ? `Owes you ${formatCurrency(pb.amount)}` : `You owe ${formatCurrency(pb.amount)}`}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Link 
-                        href="/settle"
-                        className="bg-[#3a8469]/10 hover:bg-[#3a8469]/20 text-[#3a8469] text-[10px] font-black uppercase tracking-wider px-3.5 py-2 rounded-lg transition-all"
-                      >
-                        SETTLE
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          {/* Who Owes What section - Mock 3 */}
+          <div className="space-y-4">
+            <h3 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em] block mb-2">
+              people balances overview
+            </h3>
 
-            {/* Add or Invite Roommates box placeholder */}
-            <Card className="bg-[#0c0e0e] border border-dashed border-zinc-850 rounded-[20px] overflow-hidden hover:bg-zinc-900/10 transition-all duration-250 cursor-pointer active:scale-98">
-              <Link href="/roommates">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3.5 text-left">
-                    <div className="h-10 w-10 rounded-full border border-dashed border-zinc-800 flex items-center justify-center text-zinc-400">
-                      <Plus className="h-4 w-4 text-[#3a8469]" />
-                    </div>
+            <div className="space-y-3">
+              {roomiesToOwe.map(({ user: rUser, share }) => (
+                <div 
+                  key={rUser.id} 
+                  className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex justify-between items-center"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <Avatar className="h-10 w-10 border border-zinc-800">
+                      <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-bold text-xs">
+                        {rUser.name?.charAt(0) || "R"}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
-                      <p className="font-bold text-zinc-350 text-sm">Add or Invite Roommates</p>
-                      <p className="text-[10px] text-zinc-550 font-medium mt-0.5">
-                        Create phantom profiles or share links
+                      <h4 className="font-extrabold text-zinc-150 text-sm leading-tight">{rUser.name}</h4>
+                      <p className="text-[10px] text-zinc-500 mt-1 font-medium">
+                        {share > 0 ? "owes you money" : "you owe them money"}
                       </p>
                     </div>
                   </div>
-                </CardContent>
-              </Link>
-            </Card>
 
-            <SimplifiedDebtsCard 
-              simplifiedDebts={serializedSimplifiedDebts} 
-              users={serializedUsers} 
-            />
+                  <div className="text-right">
+                    <span className={`text-base font-black tracking-tight ${
+                      share > 0 ? 'text-[#82d0ad]' : 'text-orange-400'
+                    }`}>
+                      {formatCurrency(share)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+              {roomiesToOwe.length === 0 && (
+                <div className="bg-[#181a1b] border border-zinc-900 border-dashed rounded-[20px] p-8 text-center text-zinc-500 flex flex-col items-center justify-center gap-3">
+                  <div className="h-10 w-10 bg-[#82d0ad]/10 rounded-full flex items-center justify-center">
+                    <Plus className="h-4 w-4 text-[#82d0ad]" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-zinc-300 text-xs uppercase tracking-wider">No active debts</h4>
+                    <p className="text-[9px] text-zinc-550 mt-1">Everyone in the apartment is settled up!</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Recent Activity Section */}
-        <div className="px-6 pb-28 pt-4">
-          <h2 className="text-base font-bold text-zinc-100 mb-4 tracking-tight">Recent Activity</h2>
-          <div className="space-y-3.5">
-            {recentActivity.map((activity, idx) => {
-              if (activity.type === 'expense') {
-                const expense = activity.data;
-                const creator = users.find(u => u.id === expense.creatorId);
-                return (
-                  <Link key={idx} href={`/expense/${expense.id}`} className="flex items-center justify-between hover:bg-[#181a1b]/40 p-2 rounded-xl transition-colors">
-                    <div className="flex items-center gap-3.5 text-left">
-                      <div className="h-10 w-10 rounded-full bg-zinc-900 border border-zinc-850 flex items-center justify-center">
-                        <ArrowDownLeft className="h-4 w-4 text-zinc-550" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-zinc-200 text-sm">{expense.description}</p>
-                        <p className="text-[10px] text-zinc-500 mt-0.5">Paid by {creator?.name || "Someone"}</p>
-                      </div>
+          {/* Quick transaction history */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em]">
+                activity recent transactions
+              </h3>
+              <Link 
+                href="/activity" 
+                className="text-[10px] font-bold text-[#82d0ad] hover:underline"
+              >
+                View all
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {activeExpenses.slice(0, 3).map((exp) => (
+                <Link 
+                  key={exp.id} 
+                  href={`/expense/${exp.id}`}
+                  className="bg-[#181a1b] border border-zinc-900 rounded-[20px] p-4.5 flex justify-between items-center hover:bg-[#1f2122] transition-colors block"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="h-9 w-9 bg-zinc-900 border border-zinc-850 rounded-xl flex items-center justify-center shrink-0">
+                      <Receipt className="h-4.5 w-4.5 text-zinc-400" />
                     </div>
-                    <div className="text-sm font-black text-zinc-200">
-                      {formatCurrency(expense.totalAmount)}
-                    </div>
-                  </Link>
-                );
-              } else {
-                const settlement = activity.data;
-                const payer = users.find(u => u.id === settlement.payerId);
-                const payee = users.find(u => u.id === settlement.payeeId);
-                return (
-                  <div key={idx} className="flex items-center justify-between p-2">
-                    <div className="flex items-center gap-3.5 text-left">
-                      <div className="h-10 w-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                        <ArrowUpRight className="h-4 w-4 text-[#3a8469]" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-zinc-200 text-sm">Payment</p>
-                        <p className="text-[10px] text-zinc-550 mt-0.5">{payer?.name || "Someone"} paid {payee?.name || "Someone"}</p>
-                      </div>
-                    </div>
-                    <div className="text-sm font-bold text-zinc-400">
-                      {formatCurrency(settlement.amount)}
+                    <div>
+                      <h4 className="font-extrabold text-zinc-150 text-xs uppercase tracking-wider">{exp.description}</h4>
+                      <p className="text-[9px] text-zinc-500 mt-1 font-medium">
+                        Paid by {exp.creator.name} • {new Date(exp.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
-                );
-              }
-            })}
+
+                  <div className="text-right flex items-center gap-1.5">
+                    <span className="text-sm font-black text-white">
+                      {formatCurrency(exp.totalAmount)}
+                    </span>
+                    <ArrowUpRight className="h-4 w-4 text-[#82d0ad]" />
+                  </div>
+                </Link>
+              ))}
+
+              {activeExpenses.length === 0 && (
+                <p className="text-zinc-550 text-xs text-center py-4">No recent expenses found.</p>
+              )}
+            </div>
           </div>
         </div>
       </ScrollArea>
 
-      {/* Floating Add Capsule FAB - Mock 3 */}
+      {/* Floating Action Button (FAB) - Mock 3 */}
       <Link 
         href="/expense/new"
-        className="fixed bottom-22 right-5 z-40 bg-[#3a8469] text-zinc-950 shadow-xl px-4.5 py-2.5 rounded-full flex items-center justify-center gap-1 font-black text-[10px] tracking-wider uppercase active:scale-95 transition-all select-none border border-zinc-900/50 hover:bg-[#2f6c56]"
+        className="fixed bottom-22 right-5 z-40 bg-[#82d0ad] text-zinc-950 shadow-xl px-4.5 py-2.5 rounded-full flex items-center justify-center gap-1 font-black text-[10px] tracking-wider uppercase active:scale-95 transition-all select-none border border-zinc-900/50 hover:bg-[#71bda0]"
       >
-        <Plus className="h-3.5 w-3.5 stroke-[3]" /> Add
+        <Plus className="h-4 w-4 stroke-[3]" /> Add
       </Link>
     </div>
   );

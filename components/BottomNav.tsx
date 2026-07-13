@@ -49,7 +49,7 @@ export function BottomNav() {
               </div>
               <span className={cn(
                 "text-[9px] font-bold uppercase tracking-wider mt-1.5",
-                isActive ? "text-[#3a8469]" : "text-zinc-550"
+                isActive ? "text-[#82d0ad]" : "text-zinc-550"
               )}>
                 {item.label}
               </span>
