@@ -195,12 +195,9 @@ export default async function ActivityPage() {
         </div>
         <div className="flex items-center gap-3">
           <ExportCSVButton activities={serializedActivity} users={serializedUsers} />
-          <button 
-            onClick={() => {}}
-            className="text-[10px] font-bold text-zinc-400 hover:text-zinc-200 tracking-wider flex items-center gap-1"
-          >
+          <span className="text-[10px] font-bold text-zinc-400 flex items-center justify-center p-2 rounded-full">
             <Bell className="h-4 w-4" />
-          </button>
+          </span>
         </div>
       </div>
 
