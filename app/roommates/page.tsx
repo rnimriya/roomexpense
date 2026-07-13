@@ -37,10 +37,13 @@ export default async function RoommatesPage() {
   const serializedMembers = apartment.members.map((m) => ({
     userId: m.userId,
     apartmentId: m.apartmentId,
+    isAdmin: m.isAdmin,
     user: {
       id: m.user.id,
       name: m.user.name,
       email: m.user.email,
+      image: m.user.image,
+      phone: m.user.phone,
     },
   }));
 

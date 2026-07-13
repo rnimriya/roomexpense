@@ -91,6 +91,7 @@ model ApartmentMember {
   apartmentId String
   userId      String
   joinedAt    DateTime @default(now())
+  isAdmin     Boolean  @default(false)
 
   apartment Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)

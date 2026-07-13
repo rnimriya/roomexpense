@@ -1,5 +1,7 @@
 "use server";
 
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { SplitType } from "@prisma/client";
@@ -592,6 +594,26 @@ export async function createApartmentAction(name: string, creatorId: string) {
 }
 
 export async function removeRoommateAction(apartmentId: string, userIdToRemove: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) throw new Error("Unauthorized");
+
+  const currentUser = await prisma.user.findUnique({ where: { email: session.user.email } });
+  if (!currentUser) throw new Error("User not found");
+
+  // Check if current user is admin
+  const membership = await prisma.apartmentMember.findUnique({
+    where: { apartmentId_userId: { apartmentId, userId: currentUser.id } }
+  });
+
+  if (!membership?.isAdmin) {
+    throw new Error("Only admins can remove roommates.");
+  }
+
+  // Prevent admin from removing themselves here if needed, but maybe they can?
+  if (currentUser.id === userIdToRemove) {
+    throw new Error("You cannot remove yourself from the apartment.");
+  }
+
   // 1. Calculate the user's net balance in the apartment
   const participants = await prisma.expenseParticipant.findMany({
     where: {
@@ -683,5 +705,31 @@ export async function updateRoommateProfileAction(
   revalidatePath("/dashboard");
 }
 
+export async function toggleAdminAction(apartmentId: string, targetUserId: string, makeAdmin: boolean) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) throw new Error("Unauthorized");
 
+  const currentUser = await prisma.user.findUnique({ where: { email: session.user.email } });
+  if (!currentUser) throw new Error("User not found");
 
+  // Check if current user is admin
+  const currentMembership = await prisma.apartmentMember.findUnique({
+    where: { apartmentId_userId: { apartmentId, userId: currentUser.id } }
+  });
+
+  if (!currentMembership?.isAdmin) {
+    throw new Error("Only admins can change roles.");
+  }
+
+  // Prevent removing own admin status
+  if (currentUser.id === targetUserId && !makeAdmin) {
+    throw new Error("You cannot revoke your own admin status.");
+  }
+
+  await prisma.apartmentMember.update({
+    where: { apartmentId_userId: { apartmentId, userId: targetUserId } },
+    data: { isAdmin: makeAdmin }
+  });
+
+  revalidatePath("/roommates");
+}

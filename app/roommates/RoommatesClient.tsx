@@ -5,13 +5,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, UserPlus, Search, Share2, Plus, Bell, Trash2, Camera, Sparkles, User, Mail, Phone } from "lucide-react";
+import { ArrowLeft, UserPlus, Search, Share2, Plus, Bell, Trash2, Camera, Sparkles, User, Mail, Phone, Shield, ShieldOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { RoommateForm } from "./RoommateForm";
 import { RemoveRoommateButton } from "./RemoveRoommateButton";
 import { InviteLinkBox } from "./InviteLinkBox";
-import { updateRoommateProfileAction } from "@/app/actions";
+import { updateRoommateProfileAction, toggleAdminAction } from "@/app/actions";
 
 const AVATARS = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=250&auto=format&fit=crop",
@@ -45,6 +45,9 @@ export function RoommatesClient({
   const [editPhone, setEditPhone] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
   const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [togglingAdminId, setTogglingAdminId] = useState<string | null>(null);
+
+  const currentUserIsAdmin = members.find((m) => m.userId === currentUserId)?.isAdmin || false;
 
   // Filter members by search input
   const filteredMembers = members.filter((member) =>
@@ -76,6 +79,19 @@ export function RoommatesClient({
       toast.error(err.message || "Failed to update profile");
     } finally {
       setUpdatingProfile(false);
+    }
+  };
+
+  const handleToggleAdmin = async (userId: string, currentAdminStatus: boolean) => {
+    if (togglingAdminId) return;
+    setTogglingAdminId(userId);
+    try {
+      await toggleAdminAction(apartment.id, userId, !currentAdminStatus);
+      toast.success(currentAdminStatus ? "Admin rights revoked" : "User promoted to admin");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to change role");
+    } finally {
+      setTogglingAdminId(null);
     }
   };
 
@@ -157,11 +173,20 @@ export function RoommatesClient({
                           {member.user.name?.charAt(0) || "R"}
                         </AvatarFallback>
                       </Avatar>
+                      <div className="min-w-0 flex-1 flex items-center gap-2">
                       <div className="min-w-0">
-                        <p className="font-bold text-zinc-150 text-sm leading-tight truncate">{member.user.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-zinc-150 text-sm leading-tight truncate">{member.user.name}</p>
+                          {member.isAdmin && (
+                            <span className="text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest text-[#82d0ad] bg-[#82d0ad]/10 border border-[#82d0ad]/30">
+                              ADMIN
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-zinc-500 font-medium mt-0.5 truncate">{member.user.email || "No email"}</p>
                         {member.user.phone && <p className="text-[10px] text-zinc-600 font-medium truncate">{member.user.phone}</p>}
                       </div>
+                    </div>
                     </div>
                     
                     <div className="flex items-center gap-2 shrink-0">
@@ -171,6 +196,29 @@ export function RoommatesClient({
                         </span>
                       )}
                       
+                      {/* Make Admin Toggle */}
+                      {currentUserIsAdmin && member.userId !== currentUserId && (
+                        <button
+                          type="button"
+                          disabled={togglingAdminId === member.userId}
+                          onClick={() => handleToggleAdmin(member.userId, member.isAdmin)}
+                          className={`p-2.5 border rounded-xl transition-all cursor-pointer flex items-center justify-center ${
+                            member.isAdmin 
+                              ? "bg-zinc-900 border-zinc-800 text-[#82d0ad] hover:bg-zinc-800" 
+                              : "bg-zinc-900 border-zinc-850 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800"
+                          }`}
+                          title={member.isAdmin ? "Revoke Admin" : "Make Admin"}
+                        >
+                          {togglingAdminId === member.userId ? (
+                            <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                          ) : member.isAdmin ? (
+                            <Shield className="h-4.5 w-4.5" />
+                          ) : (
+                            <ShieldOff className="h-4.5 w-4.5" />
+                          )}
+                        </button>
+                      )}
+
                       {/* Edit Profile trigger */}
                       <button
                         type="button"
@@ -188,7 +236,7 @@ export function RoommatesClient({
                         <User className="h-4.5 w-4.5" />
                       </button>
 
-                      {member.userId !== currentUserId && (
+                      {currentUserIsAdmin && member.userId !== currentUserId && (
                         <RemoveRoommateButton 
                           apartmentId={apartment.id} 
                           userId={member.userId} 
