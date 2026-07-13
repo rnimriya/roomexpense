@@ -655,12 +655,30 @@ export async function removeRoommateAction(apartmentId: string, userIdToRemove: 
   revalidatePath("/dashboard");
 }
 
-export async function updateRoommatePhotoAction(userId: string, imageUrl: string) {
+export async function updateRoommateProfileAction(
+  userId: string, 
+  data: { name?: string; email?: string; phone?: string; imageUrl?: string }
+) {
   if (!userId) throw new Error("User ID is required");
+  
+  // If email is provided, check if it's already taken by someone else
+  if (data.email) {
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing && existing.id !== userId) {
+      throw new Error("This email is already in use by another user");
+    }
+  }
+
   await prisma.user.update({
     where: { id: userId },
-    data: { image: imageUrl },
+    data: { 
+      name: data.name,
+      email: data.email || null,
+      phone: data.phone || null,
+      image: data.imageUrl 
+    },
   });
+  
   revalidatePath("/roommates");
   revalidatePath("/dashboard");
 }
