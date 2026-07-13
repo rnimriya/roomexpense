@@ -23,7 +23,7 @@ export default async function HelpSettingsPage() {
     },
     {
       q: "What are the subscription tiers?",
-      a: "RoomiePay offers 3 tiers: Free (1 roommate), Basic ($5/mo for up to 2 roommates), and Pro ($12/mo for unlimited roommates). Trials are free for 30 days."
+      a: "Rentify offers 3 tiers: Free (1 roommate), Basic ($5/mo for up to 2 roommates), and Pro ($12/mo for unlimited roommates). Trials are free for 30 days."
     }
   ];
 

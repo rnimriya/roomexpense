@@ -33,7 +33,7 @@ export function PaywallUpgradeModal({
   const handleUpgradeSuccess = async () => {
     try {
       await upgradeApartmentAction(apartmentId, tier);
-      toast.success(`30-Day Free Trial Activated for RoomiePay ${isBasic ? "Basic" : "Pro"}!`);
+      toast.success(`30-Day Free Trial Activated for Rentify ${isBasic ? "Basic" : "Pro"}!`);
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
@@ -55,7 +55,7 @@ export function PaywallUpgradeModal({
             </div>
             <DialogTitle className="text-xl font-black text-zinc-100">Start 30-Day Trial</DialogTitle>
             <p className="text-xs text-zinc-450 mt-1.5 max-w-xs mx-auto leading-relaxed">
-              Unlock RoomiePay {isBasic ? "Basic" : "Pro"}. Try free for 30 days, cancel anytime.
+              Unlock Rentify {isBasic ? "Basic" : "Pro"}. Try free for 30 days, cancel anytime.
             </p>
           </DialogHeader>
 
@@ -112,7 +112,7 @@ export function PaywallUpgradeModal({
           open={stripeOpen}
           onOpenChange={setStripeOpen}
           amount={upgradeCostCents}
-          payeeName={`RoomiePay ${isBasic ? "Basic" : "Pro"} Trial`}
+          payeeName={`Rentify ${isBasic ? "Basic" : "Pro"} Trial`}
           onSuccess={handleUpgradeSuccess}
         />
       )}

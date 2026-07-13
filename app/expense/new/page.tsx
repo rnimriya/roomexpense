@@ -144,8 +144,8 @@ export default function AddExpensePage() {
               ENTER AMOUNT
             </p>
             <div className="flex items-baseline justify-center text-[#82d0ad] relative">
-              <span className="text-3xl font-black mr-1.5 select-none">$</span>
-              <span className="text-6.5xl font-black tracking-tight leading-none">
+              <span className="text-3xl font-normal mr-1.5 select-none opacity-80">$</span>
+              <span className="text-5xl font-normal tracking-tight leading-none">
                 {formattedAmount}
               </span>
             </div>
