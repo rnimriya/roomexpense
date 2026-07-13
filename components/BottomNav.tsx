@@ -24,10 +24,11 @@ export function BottomNav() {
     { href: "/dashboard", label: "Home", icon: Home },
     { href: "/activity", label: "Activity", icon: Receipt },
     { href: "/roommates", label: "Roommates", icon: Users },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-[#0c0e0e] border-t border-zinc-900/60 shadow-2xl px-3 py-2.5 z-50 select-none pb-safe">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-[#0c0e0e] border-t border-zinc-900/60 shadow-2xl px-2 py-2.5 z-50 select-none pb-safe">
       <div className="flex justify-around items-end h-14">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -36,12 +37,12 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center w-20 text-center transition-all group"
+              className="flex flex-col items-center justify-center w-16 text-center transition-all group"
             >
               <div className={cn(
-                "h-7 w-14 rounded-full flex items-center justify-center transition-all duration-250",
+                "h-7 w-12 rounded-full flex items-center justify-center transition-all duration-250",
                 isActive 
-                  ? "bg-[#3a8469] text-zinc-950" 
+                  ? "bg-[#82d0ad] text-zinc-950" 
                   : "text-zinc-500 group-hover:text-zinc-350"
               )}>
                 <Icon className="h-4.5 w-4.5" />

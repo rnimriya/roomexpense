@@ -82,7 +82,7 @@ export default async function ActivityPage() {
   // Determine icon layout metadata from description matching
   const getIconData = (description: string, type: 'expense' | 'settlement') => {
     if (type === 'settlement') {
-      return { icon: ArrowUpRight, label: "transfer", color: "text-[#3a8469]" };
+      return { icon: ArrowUpRight, label: "transfer", color: "text-[#82d0ad]" };
     }
     const desc = description.toLowerCase();
     if (desc.includes("pizza") || desc.includes("night")) {
@@ -130,7 +130,7 @@ export default async function ActivityPage() {
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className={`text-base font-black ${isPaidByMe ? 'text-[#3a8469]' : 'text-zinc-200'}`}>
+            <p className={`text-base font-black ${isPaidByMe ? 'text-[#82d0ad]' : 'text-zinc-200'}`}>
               {isPaidByMe ? '+' : '-'}{formatCurrency(expense.totalAmount)}
             </p>
             <p className="text-[9px] text-zinc-500 mt-0.5">
@@ -167,7 +167,7 @@ export default async function ActivityPage() {
             </div>
           </div>
           <div className="text-right shrink-0">
-            <p className={`text-base font-black ${!isPaidByMe ? 'text-[#3a8469]' : 'text-zinc-200'}`}>
+            <p className={`text-base font-black ${!isPaidByMe ? 'text-[#82d0ad]' : 'text-zinc-200'}`}>
               {!isPaidByMe ? '+' : '-'}{formatCurrency(settlement.amount)}
             </p>
             <p className="text-[9px] text-zinc-550 mt-0.5">
@@ -184,20 +184,23 @@ export default async function ActivityPage() {
       {/* Brand Navigation Bar - Structured Top Header */}
       <div className="pt-8 pb-4 px-6 flex justify-between items-center border-b border-zinc-900 bg-[#0c0e0e]/80 backdrop-blur-md z-40 shrink-0">
         <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 border border-[#3a8469]/20">
-            <AvatarFallback className="bg-zinc-900 text-[#3a8469] font-bold text-xs">
+          <Avatar className="h-8 w-8 border border-[#82d0ad]/20">
+            <AvatarFallback className="bg-zinc-900 text-[#82d0ad] font-bold text-xs">
               U
             </AvatarFallback>
           </Avatar>
           <h1 className="text-base font-black tracking-wide text-white">
-            <span className="text-[#3a8469]">Roomie</span>Pay
+            <span className="text-[#82d0ad]">Roomie</span>Pay
           </h1>
         </div>
         <div className="flex items-center gap-3">
           <ExportCSVButton activities={serializedActivity} users={serializedUsers} />
-          <span className="text-[10px] font-bold text-zinc-400 flex items-center justify-center p-2 rounded-full">
+          <button 
+            onClick={() => {}}
+            className="text-[10px] font-bold text-zinc-400 hover:text-zinc-200 tracking-wider flex items-center gap-1"
+          >
             <Bell className="h-4 w-4" />
-          </span>
+          </button>
         </div>
       </div>
 
