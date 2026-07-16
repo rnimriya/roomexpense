@@ -30,37 +30,51 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        console.log("AUTHORIZE CALLED WITH:", credentials);
+        try {
+          if (!credentials?.email || !credentials?.password) return null;
 
-        let user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
-
-        if (!user) {
-          // If no user is found, we automatically create one (Sign Up) for the MVP
-          if (!credentials.name) throw new Error("Name is required to sign up");
-          const hashedPassword = await bcrypt.hash(credentials.password, 10);
-          user = await prisma.user.create({
-            data: {
-              name: credentials.name,
-              email: credentials.email,
-              password: hashedPassword,
-            }
+          let user = await prisma.user.findUnique({
+            where: { email: credentials.email }
           });
-        } else {
-          // Verify password
-          if (!user.password) throw new Error("Please log in with OAuth");
-          const isValid = await bcrypt.compare(credentials.password, user.password);
-          if (!isValid) throw new Error("Invalid password");
-        }
 
-        return { id: user.id, name: user.name, email: user.email };
+          if (!user) {
+            if (!credentials.name) throw new Error("Name is required to sign up");
+            console.log("Hashing password...");
+            const hashedPassword = await bcrypt.hash(credentials.password, 10);
+            console.log("Creating user...");
+            user = await prisma.user.create({
+              data: {
+                name: credentials.name,
+                email: credentials.email,
+                password: hashedPassword,
+              }
+            });
+            console.log("USER CREATED:", user);
+          } else {
+            // Verify password
+            if (!user.password) throw new Error("Please log in with OAuth");
+            const isValid = await bcrypt.compare(credentials.password, user.password);
+            if (!isValid) throw new Error("Invalid password");
+          }
+
+          return { id: user.id, name: user.name, email: user.email };
+        } catch (error) {
+          console.error("AUTHORIZE ERROR:", error);
+          throw error;
+        }
       }
     })
   ],
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (token && session.user) {
         (session.user as any).id = token.sub;
