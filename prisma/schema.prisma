@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model Account {
@@ -101,7 +101,11 @@ model ApartmentMember {
   @@map("apartment_members")
 }
 
-// SplitType enum removed for SQLite compatibility
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+}
 
 model Expense {
   id                 String    @id @default(cuid())
@@ -109,7 +113,7 @@ model Expense {
   creatorId          String
   description        String
   totalAmount        Int       // Stored in cents
-  splitType          String
+  splitType          SplitType
   isDeleted          Boolean   @default(false)
   receiptUrl         String?
   isRecurring        Boolean   @default(false)

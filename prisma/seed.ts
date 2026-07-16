@@ -1,18 +1,13 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient, SplitType } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import path from "path";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
 
-const dbPath = path.join(process.cwd(), "dev.db");
-const adapter = new PrismaBetterSqlite3({ url: dbPath });
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
-
-const SplitType = {
-  EQUAL: "EQUAL",
-  EXACT: "EXACT",
-  PERCENTAGE: "PERCENTAGE"
-};
 
 async function main() {
   // Clear existing database
